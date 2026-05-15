@@ -728,36 +728,16 @@
         "safety": "readonly",
         "description": "CloudFront アクセスログから期間内のリクエスト数 Top URI を集計する。\n異常なアクセス集中の調査に利用。Glue データカタログに CloudFront ログテーブル\nが登録済みであることが前提。",
         "required_permissions": [
-          {
-            "athena": "StartQueryExecution"
-          },
-          {
-            "athena": "GetQueryExecution"
-          },
-          {
-            "athena": "GetQueryResults"
-          },
-          {
-            "athena": "StopQueryExecution"
-          },
-          {
-            "glue": "GetTable"
-          },
-          {
-            "glue": "GetDatabase"
-          },
-          {
-            "glue": "GetPartitions"
-          },
-          {
-            "s3": "GetObject"
-          },
-          {
-            "s3": "PutObject"
-          },
-          {
-            "s3": "ListBucket"
-          }
+          "athena:StartQueryExecution",
+          "athena:GetQueryExecution",
+          "athena:GetQueryResults",
+          "athena:StopQueryExecution",
+          "glue:GetTable",
+          "glue:GetDatabase",
+          "glue:GetPartitions",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
         ],
         "parameters": [
           {
@@ -785,7 +765,7 @@
           }
         ],
         "estimated_runtime_seconds": 30,
-        "estimated_cost_usd": "0.01  # Athena スキャン料金の目安、データ量で増減"
+        "estimated_cost_usd": 0.01
       },
       {
         "name": "cloudwatch-alb-5xx-rate",
@@ -795,12 +775,8 @@
         "safety": "readonly",
         "description": "ALB の 5xx エラー率（HTTPCode_ELB_5XX_Count, HTTPCode_Target_5XX_Count, RequestCount）を\n時系列で取得する。",
         "required_permissions": [
-          {
-            "cloudwatch": "GetMetricData"
-          },
-          {
-            "elasticloadbalancing": "DescribeLoadBalancers  # 任意（対象特定用）"
-          }
+          "cloudwatch:GetMetricData",
+          "elasticloadbalancing:DescribeLoadBalancers"
         ],
         "parameters": [
           {
@@ -827,7 +803,7 @@
           }
         ],
         "estimated_runtime_seconds": 10,
-        "estimated_cost_usd": "0.00  # GetMetricData は metric/datapoint 単位、通常無料枠内"
+        "estimated_cost_usd": 0.0
       },
       {
         "name": "cloudwatch-ec2-cpu-stats",
@@ -837,12 +813,8 @@
         "safety": "readonly",
         "description": "EC2 インスタンスの CPUUtilization メトリクスを時系列で取得する。",
         "required_permissions": [
-          {
-            "cloudwatch": "GetMetricStatistics"
-          },
-          {
-            "cloudwatch": "GetMetricData"
-          }
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:GetMetricData"
         ],
         "parameters": [
           {
@@ -877,15 +849,9 @@
         "safety": "readonly",
         "description": "指定タグキー・値で EC2 インスタンスを検索し、構成情報を JSON で取得する。\n全リージョン横断・特定リージョンのいずれも対応。",
         "required_permissions": [
-          {
-            "ec2": "DescribeInstances"
-          },
-          {
-            "ec2": "DescribeRegions"
-          },
-          {
-            "ssm": "DescribeInstanceInformation  # SSM Online ステータス"
-          }
+          "ec2:DescribeInstances",
+          "ec2:DescribeRegions",
+          "ssm:DescribeInstanceInformation"
         ],
         "parameters": [
           {
@@ -907,7 +873,7 @@
             "description": "空なら全リージョン横断、指定すれば特定リージョン"
           }
         ],
-        "estimated_runtime_seconds": "30  # 全リージョン横断時",
+        "estimated_runtime_seconds": 30,
         "estimated_cost_usd": 0.0
       }
     ]

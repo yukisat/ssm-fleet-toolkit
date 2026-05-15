@@ -125,7 +125,8 @@ def parse_simple_yaml(text):
                             stripped = ln.strip()
                             if stripped.startswith("- "):
                                 item_val = stripped[2:].strip()
-                                if ":" in item_val:
+                                # ": "（コロン + スペース）があれば key:value、それ以外（例 ssm:Foo）はスカラ
+                                if ": " in item_val or item_val.endswith(":"):
                                     # オブジェクトリスト要素の最初のフィールド
                                     obj = {}
                                     fk, _, fv = item_val.partition(":")
@@ -143,7 +144,7 @@ def parse_simple_yaml(text):
                                         s2 = ln2.strip()
                                         if s2.startswith("- "):
                                             break
-                                        if ":" in s2:
+                                        if ": " in s2:
                                             fk2, _, fv2 = s2.partition(":")
                                             obj[fk2.strip()] = parse_scalar(fv2.strip())
                                         k += 1
@@ -170,7 +171,24 @@ def parse_simple_yaml(text):
     return result
 
 
+def strip_inline_comment(val):
+    """インラインコメント `... # comment` を除去（引用符内は保持）"""
+    in_single = False
+    in_double = False
+    for i, c in enumerate(val):
+        if c == "'" and not in_double:
+            in_single = not in_single
+        elif c == '"' and not in_single:
+            in_double = not in_double
+        elif c == "#" and not in_single and not in_double:
+            # # の前に空白があるか確認（リテラルの一部かどうか）
+            if i == 0 or val[i - 1].isspace():
+                return val[:i].rstrip()
+    return val
+
+
 def parse_scalar(val):
+    val = strip_inline_comment(val)
     # インラインリスト [a, b, c]
     if val.startswith("[") and val.endswith("]"):
         inner = val[1:-1].strip()
