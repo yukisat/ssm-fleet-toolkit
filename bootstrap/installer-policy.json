@@ -1,0 +1,162 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "OrganizationsReadAndEnableTrustedAccess",
+      "Effect": "Allow",
+      "Action": [
+        "organizations:DescribeOrganization",
+        "organizations:ListAccounts",
+        "organizations:ListAWSServiceAccessForOrganization",
+        "organizations:EnableAWSServiceAccess"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SSOAdminManagePermissionSets",
+      "Effect": "Allow",
+      "Action": [
+        "sso:*",
+        "sso-directory:*",
+        "identitystore:*",
+        "sso:CreatePermissionSet",
+        "sso:DescribePermissionSet",
+        "sso:DeletePermissionSet",
+        "sso:UpdatePermissionSet",
+        "sso:ListPermissionSets",
+        "sso:AttachManagedPolicyToPermissionSet",
+        "sso:DetachManagedPolicyFromPermissionSet",
+        "sso:PutInlinePolicyToPermissionSet",
+        "sso:GetInlinePolicyForPermissionSet",
+        "sso:DeleteInlinePolicyFromPermissionSet",
+        "sso:ListInstances",
+        "sso:CreateAccountAssignment",
+        "sso:DeleteAccountAssignment",
+        "sso:ListAccountAssignments"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudFormationStackSets",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateStackSet",
+        "cloudformation:UpdateStackSet",
+        "cloudformation:DeleteStackSet",
+        "cloudformation:DescribeStackSet",
+        "cloudformation:ListStackSets",
+        "cloudformation:CreateStackInstances",
+        "cloudformation:DeleteStackInstances",
+        "cloudformation:DescribeStackSetOperation",
+        "cloudformation:ListStackInstances"
+      ],
+      "Resource": [
+        "arn:aws:cloudformation:*:*:stackset/ssm-fleet-*:*",
+        "arn:aws:cloudformation:*:*:stackset-target/ssm-fleet-*:*"
+      ]
+    },
+    {
+      "Sid": "IAMManageSsmFleetRoles",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:UpdateRole",
+        "iam:GetRole",
+        "iam:CreatePolicy",
+        "iam:DeletePolicy",
+        "iam:GetPolicy",
+        "iam:CreatePolicyVersion",
+        "iam:DeletePolicyVersion",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:GetRolePolicy",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListRolePolicies",
+        "iam:PassRole",
+        "iam:TagRole",
+        "iam:UntagRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:role/ssm-fleet-*",
+        "arn:aws:iam::*:policy/ssm-fleet-*"
+      ]
+    },
+    {
+      "Sid": "S3TerraformBackend",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:GetBucketLocation",
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:PutBucketVersioning",
+        "s3:GetBucketVersioning",
+        "s3:PutBucketPolicy",
+        "s3:GetBucketPolicy",
+        "s3:PutEncryptionConfiguration",
+        "s3:GetEncryptionConfiguration",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:GetBucketPublicAccessBlock"
+      ],
+      "Resource": [
+        "arn:aws:s3:::*-ssm-fleet-tf-state*",
+        "arn:aws:s3:::*-ssm-fleet-tf-state*/*"
+      ]
+    },
+    {
+      "Sid": "DynamoDBTerraformLock",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:CreateTable",
+        "dynamodb:DeleteTable",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:UpdateTable",
+        "dynamodb:TagResource"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:*:*:table/ssm-fleet-tf-lock*"
+      ]
+    },
+    {
+      "Sid": "SSMDocumentManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:CreateDocument",
+        "ssm:UpdateDocument",
+        "ssm:UpdateDocumentDefaultVersion",
+        "ssm:DeleteDocument",
+        "ssm:DescribeDocument",
+        "ssm:GetDocument",
+        "ssm:ListDocuments",
+        "ssm:ListDocumentVersions",
+        "ssm:ModifyDocumentPermission",
+        "ssm:DescribeDocumentPermission",
+        "ssm:AddTagsToResource",
+        "ssm:RemoveTagsFromResource",
+        "ssm:ListTagsForResource"
+      ],
+      "Resource": [
+        "arn:aws:ssm:*:*:document/claude-investigate-*"
+      ]
+    },
+    {
+      "Sid": "ReadOnlyForPreflightChecks",
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity",
+        "ec2:DescribeRegions",
+        "ec2:DescribeAvailabilityZones"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

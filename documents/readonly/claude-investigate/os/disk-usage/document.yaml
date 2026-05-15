@@ -1,0 +1,25 @@
+schemaVersion: "2.2"
+description: |
+  ディスク使用量を JSON 形式で取得する readonly 調査 Document。
+  df -P の出力を解析し、機械可読な配列で返す。
+parameters: {}
+mainSteps:
+  - action: aws:runShellScript
+    name: collectDiskUsage
+    inputs:
+      timeoutSeconds: "30"
+      runCommand:
+        - |
+          set -eu
+          # POSIX format で 1KB ブロック表示、各 mount を 1 行にする
+          df -P -k | awk 'NR>1 {
+            mount=$6
+            size_kb=$2
+            used_kb=$3
+            avail_kb=$4
+            use_pct=$5
+            sub("%", "", use_pct)
+            printf "%s{\"mount\":\"%s\",\"size_bytes\":%d,\"used_bytes\":%d,\"available_bytes\":%d,\"use_percent\":%d}",
+              (NR==2?"[":","), mount, size_kb*1024, used_kb*1024, avail_kb*1024, use_pct
+          }
+          END { print "]" }'
