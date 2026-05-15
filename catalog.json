@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/yukisat/ssm-fleet-toolkit/main/catalog.schema.json",
+  "version": "0.1.0",
+  "generated_at": null,
+  "note": "現状は手動更新。将来的に scripts/build-catalog.sh で metadata.yaml から自動生成予定。",
+  "investigation_methods": {
+    "ssm_documents": [
+      {
+        "name": "claude-investigate-os-disk-usage",
+        "path": "documents/readonly/claude-investigate/os/disk-usage",
+        "category": "os",
+        "subcategory": "linux-common",
+        "safety": "readonly",
+        "description": "ディスク使用量を JSON 形式で取得",
+        "supported_os": ["amazon-linux-2", "amazon-linux-2023", "ubuntu-22.04", "rhel-9"],
+        "parameters": [],
+        "estimated_runtime_seconds": 1
+      }
+    ],
+    "aws_playbooks": []
+  }
+}

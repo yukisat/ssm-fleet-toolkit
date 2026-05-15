@@ -1,0 +1,8 @@
+aws_profile           = "your-org-admin-profile"
+primary_region        = "ap-northeast-1"
+permission_set_name   = "ClaudeInvestigator"
+investigator_group_id = "<paste IdentityStore Group ID here>"
+
+enable_ssm_investigation         = true
+enable_athena_investigation      = false
+enable_cloudwatch_investigation  = false

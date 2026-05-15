@@ -1,0 +1,47 @@
+name: claude-investigate-os-disk-usage
+category: os
+subcategory: linux-common
+safety: readonly
+description: |
+  ディスク使用量を JSON 形式で取得する。
+  df -P -k の出力を解析して機械可読な配列に整形する。
+
+supported_os:
+  - amazon-linux-2
+  - amazon-linux-2023
+  - ubuntu-20.04
+  - ubuntu-22.04
+  - ubuntu-24.04
+  - rhel-9
+  - debian-12
+
+required_packages: []
+required_commands:
+  - df
+  - awk
+
+parameters: []
+
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      mount: { type: string }
+      size_bytes: { type: integer }
+      used_bytes: { type: integer }
+      available_bytes: { type: integer }
+      use_percent: { type: integer }
+
+estimated_runtime_seconds: 1
+
+claude_hints: |
+  - 使用率 80% 以上を warn、95% 以上を critical と判定推奨
+  - /tmp や /var/log の急増は別途調査が必要なシグナル
+  - tmpfs 等の特殊マウントも結果に含まれるので利用側でフィルタする
+  - mount が複数表示される場合があるが重複ではなく別ファイルシステム
+
+example_invocation: |
+  aws ssm send-command \
+    --document-name claude-investigate-os-disk-usage \
+    --instance-ids i-xxxxxxxxxxxx
