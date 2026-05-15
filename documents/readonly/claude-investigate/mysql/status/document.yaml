@@ -1,0 +1,40 @@
+schemaVersion: "2.2"
+description: |
+  MySQL / MariaDB のステータス（接続数・スレッド・クエリ統計）を JSON で取得する。
+  認証情報は /root/.my.cnf 等を利用する想定（明示的な接続情報は受け取らない）。
+parameters:
+  ConfigFile:
+    type: String
+    description: my.cnf パス。空なら /root/.my.cnf を試す
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: collectMysqlStatus
+    inputs:
+      timeoutSeconds: "20"
+      runCommand:
+        - |
+          set -eu
+          CONFIG="{{ ConfigFile }}"
+          if [ -z "$CONFIG" ]; then CONFIG="/root/.my.cnf"; fi
+          OPT=""
+          if [ -f "$CONFIG" ]; then OPT="--defaults-file=$CONFIG"; fi
+
+          run_query() {
+            mysql $OPT -B -N -e "$1" 2>/dev/null || true
+          }
+
+          if ! run_query "SELECT 1;" >/dev/null 2>&1; then
+            echo '{"error":"MySQL に接続できません（認証情報が必要）"}' >&2
+            exit 1
+          fi
+
+          threads_running=$(run_query "SHOW STATUS LIKE 'Threads_running';" | awk '{print $2}')
+          threads_connected=$(run_query "SHOW STATUS LIKE 'Threads_connected';" | awk '{print $2}')
+          slow_queries=$(run_query "SHOW STATUS LIKE 'Slow_queries';" | awk '{print $2}')
+          queries=$(run_query "SHOW STATUS LIKE 'Queries';" | awk '{print $2}')
+          uptime=$(run_query "SHOW STATUS LIKE 'Uptime';" | awk '{print $2}')
+          max_connections=$(run_query "SHOW VARIABLES LIKE 'max_connections';" | awk '{print $2}')
+
+          printf '{"threads_running":%s,"threads_connected":%s,"slow_queries":%s,"queries":%s,"uptime_seconds":%s,"max_connections":%s}\n' \
+            "${threads_running:-0}" "${threads_connected:-0}" "${slow_queries:-0}" "${queries:-0}" "${uptime:-0}" "${max_connections:-0}"

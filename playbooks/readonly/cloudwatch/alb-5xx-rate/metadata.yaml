@@ -1,0 +1,45 @@
+name: cloudwatch-alb-5xx-rate
+category: cloudwatch
+subcategory: elb
+safety: readonly
+description: |
+  ALB の 5xx エラー率（HTTPCode_ELB_5XX_Count, HTTPCode_Target_5XX_Count, RequestCount）を
+  時系列で取得する。
+
+required_permissions:
+  - cloudwatch:GetMetricData
+  - elasticloadbalancing:DescribeLoadBalancers  # 任意（対象特定用）
+
+parameters:
+  - name: load_balancer_arn
+    type: string
+    required: true
+    description: 対象 ALB の ARN または ARN suffix
+  - name: time_from
+    type: timestamp
+    required: true
+  - name: time_to
+    type: timestamp
+    required: true
+  - name: period_seconds
+    type: integer
+    default: 60
+    description: メトリクス取得間隔（秒）
+
+output_schema:
+  type: object
+  properties:
+    request_count_series: { type: array }
+    elb_5xx_series: { type: array }
+    target_5xx_series: { type: array }
+    overall_5xx_rate: { type: number }
+
+estimated_runtime_seconds: 10
+estimated_cost_usd: 0.00  # GetMetricData は metric/datapoint 単位、通常無料枠内
+
+claude_hints: |
+  - elb_5xx と target_5xx の比率で原因切り分け
+    - elb_5xx 多 → ALB 自体の問題（ターゲット未起動、容量不足）
+    - target_5xx 多 → アプリケーション側のエラー
+  - 5xx_rate > 1% は要注意、5% 超は緊急対応レベル
+  - 同時刻の RequestCount スパイクとの相関を確認

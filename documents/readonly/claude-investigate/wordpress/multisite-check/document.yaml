@@ -1,0 +1,59 @@
+schemaVersion: "2.2"
+description: |
+  WordPress マルチサイト構成かを判定する readonly Document。
+  wp-config.php の MULTISITE 定数を確認する。
+parameters:
+  WebRoot:
+    type: String
+    default: /var/www
+  SiteDir:
+    type: String
+    description: 単一サイトのディレクトリ指定（空なら WebRoot 探索）
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: checkMultisite
+    inputs:
+      timeoutSeconds: "20"
+      runCommand:
+        - |
+          set -eu
+          WEB_ROOT="{{ WebRoot }}"
+          SITE_DIR="{{ SiteDir }}"
+          if [ -n "$SITE_DIR" ]; then
+            TARGETS="$SITE_DIR"
+          else
+            TARGETS=$(find "$WEB_ROOT" -maxdepth 4 -name 'wp-config.php' 2>/dev/null | sed 's|/wp-config.php$||' | head -20)
+          fi
+          if [ -z "$TARGETS" ]; then
+            echo '{"error":"wp-config.php が見つかりません"}' >&2
+            exit 1
+          fi
+          python3 - <<PYEOF
+          import json
+          import os
+          import re
+
+          results = []
+          for site in """$TARGETS""".strip().split("\n"):
+              cfg = os.path.join(site, "wp-config.php")
+              if not os.path.isfile(cfg):
+                  continue
+              try:
+                  with open(cfg, errors='ignore') as f:
+                      content = f.read()
+              except OSError:
+                  continue
+              multisite = bool(re.search(r"define\s*\(\s*'MULTISITE'\s*,\s*true\s*\)", content))
+              subdomain = bool(re.search(r"define\s*\(\s*'SUBDOMAIN_INSTALL'\s*,\s*true\s*\)", content))
+              domain_current = re.search(r"define\s*\(\s*'DOMAIN_CURRENT_SITE'\s*,\s*'([^']+)'", content)
+              path_current = re.search(r"define\s*\(\s*'PATH_CURRENT_SITE'\s*,\s*'([^']+)'", content)
+              results.append({
+                  "site": site,
+                  "is_multisite": multisite,
+                  "subdomain_install": subdomain if multisite else None,
+                  "domain_current_site": domain_current.group(1) if domain_current else None,
+                  "path_current_site": path_current.group(1) if path_current else None,
+              })
+          print(json.dumps(results, ensure_ascii=False))
+          PYEOF

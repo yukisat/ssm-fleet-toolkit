@@ -1,0 +1,20 @@
+name: claude-investigate-php-fpm-slow-log
+category: php-fpm
+subcategory: middleware
+safety: readonly
+description: PHP-FPM スロークエリログを取得する。ログパスは自動探索。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [tail]
+parameters:
+  - name: LogPath
+    type: string
+    default: ""
+  - name: Lines
+    type: string
+    default: "200"
+output_schema: { type: string }
+estimated_runtime_seconds: 1
+claude_hints: |
+  - スタックトレースから遅延箇所を特定（DB クエリ・外部 API・ループ処理）
+  - 同じ箇所が頻出 → 対象コードのチューニング必要
+  - スローログが存在しない場合は pool-config Document で slowlog 設定確認

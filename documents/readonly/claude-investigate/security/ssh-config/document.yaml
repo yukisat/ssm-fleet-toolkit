@@ -1,0 +1,60 @@
+schemaVersion: "2.2"
+description: |
+  SSH デーモン設定の主要項目を JSON で取得する readonly Document。
+  /etc/ssh/sshd_config を読み取り、認証方式・root ログイン許可・ポート等を確認する。
+  パスワードや秘密鍵の中身は一切取得しない（設定値のみ）。
+parameters:
+  ConfigFile:
+    type: String
+    description: sshd_config パス
+    default: /etc/ssh/sshd_config
+mainSteps:
+  - action: aws:runShellScript
+    name: collectSshConfig
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          CONFIG="{{ ConfigFile }}"
+          if [ ! -f "$CONFIG" ]; then
+            echo '{"error":"sshd_config が見つかりません"}' >&2
+            exit 1
+          fi
+          python3 - <<PYEOF
+          import json
+          import os
+
+          cfg = "$CONFIG"
+          interesting = [
+              "Port", "ListenAddress", "Protocol",
+              "PermitRootLogin", "PasswordAuthentication", "ChallengeResponseAuthentication",
+              "PubkeyAuthentication", "AuthorizedKeysFile",
+              "PermitEmptyPasswords", "UsePAM", "X11Forwarding",
+              "AllowUsers", "AllowGroups", "DenyUsers", "DenyGroups",
+              "MaxAuthTries", "LoginGraceTime", "ClientAliveInterval", "ClientAliveCountMax",
+              "AllowTcpForwarding", "GatewayPorts",
+          ]
+          values = {k: None for k in interesting}
+          with open(cfg) as f:
+              for line in f:
+                  line = line.strip()
+                  if not line or line.startswith("#"):
+                      continue
+                  parts = line.split(None, 1)
+                  if len(parts) != 2:
+                      continue
+                  key, val = parts
+                  if key in values:
+                      values[key] = val.strip()
+          # Include directives
+          includes = []
+          with open(cfg) as f:
+              for line in f:
+                  line = line.strip()
+                  if line.lower().startswith("include "):
+                      includes.append(line.split(None, 1)[1])
+          values["_include_directives"] = includes
+          values["_config_file"] = cfg
+          print(json.dumps(values, ensure_ascii=False))
+          PYEOF

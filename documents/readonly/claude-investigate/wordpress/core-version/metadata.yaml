@@ -1,0 +1,30 @@
+name: claude-investigate-wordpress-core-version
+category: wordpress
+subcategory: application
+safety: readonly
+description: |
+  WebRoot 配下の WordPress サイトを探索し、コアバージョンを wp-includes/version.php から抽出する。
+  WP-CLI 不要、ファイル読み取りのみで実装。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [python3]
+parameters:
+  - name: WebRoot
+    type: string
+    default: /var/www
+    description: WordPress サイトの親ディレクトリ
+  - name: MaxDepth
+    type: string
+    default: "4"
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      path: { type: string }
+      version: { type: string }
+estimated_runtime_seconds: 5
+claude_hints: |
+  - 古いバージョン（5.x 以下）はセキュリティリスク
+  - 同一サーバー内でバージョンが混在していたら統合検討
+  - version null は version.php 読み取り失敗、権限問題の可能性
+  - メジャー番号 6.x が現行サポート対象

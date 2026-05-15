@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yukisat/ssm-fleet-toolkit/blob/main/docs/schemas/metadata.schema.json",
+  "title": "metadata.yaml schema",
+  "description": "ssm-fleet-toolkit の Document / playbook メタデータスキーマ",
+  "type": "object",
+  "required": ["name", "category", "safety", "description"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Document / playbook の名前（kebab-case）",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "category": {
+      "type": "string",
+      "description": "カテゴリ（os, nginx, php, mysql, wordpress 等）"
+    },
+    "subcategory": {
+      "type": "string"
+    },
+    "safety": {
+      "type": "string",
+      "enum": ["readonly", "stateful"],
+      "description": "現在 readonly のみサポート"
+    },
+    "description": {
+      "type": "string"
+    },
+    "supported_os": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_packages": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_commands": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "optional_commands": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_permissions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "playbook 用、必要な IAM アクション"
+    },
+    "required_resources": {
+      "type": "object",
+      "description": "playbook 用、必要な AWS リソース"
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["string", "integer", "boolean", "timestamp"]
+          },
+          "default": {},
+          "required": { "type": "boolean" },
+          "allowed_values": {
+            "type": "array"
+          },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "description": "JSON Schema 風の出力スキーマ"
+    },
+    "estimated_runtime_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "estimated_cost_usd": {
+      "type": "number",
+      "minimum": 0,
+      "description": "playbook 用、実行コストの目安"
+    },
+    "claude_hints": {
+      "type": "string",
+      "description": "Claude が結果を解釈するためのヒント"
+    },
+    "example_invocation": {
+      "type": "string"
+    }
+  }
+}

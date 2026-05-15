@@ -1,0 +1,99 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 並列ジョブ制限（無料枠を守る安全弁）
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform-fmt:
+    name: Terraform fmt check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+      - name: terraform fmt -check
+        run: terraform fmt -recursive -check
+
+  terraform-validate:
+    name: Terraform validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        module:
+          - modules/ssm-document
+          - modules/sso-permission-set
+          - modules/iam-stackset
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+      - name: terraform init -backend=false
+        run: terraform -chdir=${{ matrix.module }} init -backend=false -input=false
+      - name: terraform validate
+        run: terraform -chdir=${{ matrix.module }} validate
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run shellcheck
+        run: |
+          shellcheck bootstrap/*.sh scripts/*.sh
+
+  yaml-syntax:
+    name: YAML syntax check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Validate all YAML files
+        run: |
+          python3 -c '
+          import sys, glob, yaml
+          errors = []
+          for f in glob.glob("**/*.yaml", recursive=True) + glob.glob("**/*.yml", recursive=True):
+              try:
+                  with open(f) as fh:
+                      yaml.safe_load(fh)
+              except Exception as e:
+                  errors.append(f"{f}: {e}")
+          if errors:
+              print("YAML errors:")
+              for e in errors:
+                  print("  " + e)
+              sys.exit(1)
+          print("All YAML files are valid")
+          '
+
+  catalog-up-to-date:
+    name: catalog.json is up to date
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Run build-catalog.sh --check
+        run: ./scripts/build-catalog.sh --check

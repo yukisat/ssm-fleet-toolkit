@@ -1,0 +1,59 @@
+schemaVersion: "2.2"
+description: |
+  WordPress コアバージョンを取得する readonly Document。
+  WebRoot 配下を再帰的に探索し、wp-includes/version.php からバージョンを抽出する。
+parameters:
+  WebRoot:
+    type: String
+    description: WordPress サイトの親ディレクトリ
+    default: /var/www
+  MaxDepth:
+    type: String
+    description: 探索深度
+    default: "4"
+mainSteps:
+  - action: aws:runShellScript
+    name: collectWpCoreVersion
+    inputs:
+      timeoutSeconds: "30"
+      runCommand:
+        - |
+          set -eu
+          WEB_ROOT="{{ WebRoot }}"
+          MAX_DEPTH="{{ MaxDepth }}"
+          if [ ! -d "$WEB_ROOT" ]; then
+            echo '{"error":"WebRoot ディレクトリが存在しません","web_root":"'"$WEB_ROOT"'"}' >&2
+            exit 1
+          fi
+          python3 - <<PYEOF
+          import json
+          import os
+          import re
+
+          web_root = "$WEB_ROOT"
+          max_depth = int("$MAX_DEPTH")
+          base_depth = web_root.rstrip('/').count('/')
+          results = []
+
+          for dirpath, dirs, files in os.walk(web_root):
+              depth = dirpath.count('/') - base_depth
+              if depth > max_depth:
+                  dirs[:] = []
+                  continue
+              if 'wp-includes' in dirs:
+                  version_file = os.path.join(dirpath, 'wp-includes', 'version.php')
+                  if os.path.isfile(version_file):
+                      try:
+                          with open(version_file) as f:
+                              content = f.read()
+                      except OSError:
+                          continue
+                      m = re.search(r"\$wp_version\s*=\s*'([^']+)'", content)
+                      version = m.group(1) if m else None
+                      results.append({
+                          "path": dirpath,
+                          "version": version,
+                      })
+                  dirs[:] = [d for d in dirs if d not in ('wp-includes', 'wp-content', 'wp-admin')]
+          print(json.dumps(results, ensure_ascii=False))
+          PYEOF

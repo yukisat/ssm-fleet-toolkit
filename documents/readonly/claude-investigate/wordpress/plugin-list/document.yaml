@@ -1,0 +1,91 @@
+schemaVersion: "2.2"
+description: |
+  WordPress プラグインの一覧とバージョンを取得する readonly Document。
+  WP-CLI が利用可能なら wp plugin list、なければプラグインヘッダから抽出。
+parameters:
+  WebRoot:
+    type: String
+    description: WordPress サイトの親ディレクトリ
+    default: /var/www
+  SiteDir:
+    type: String
+    description: 単一サイトのディレクトリ（指定時はそのサイトのみ）
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: collectPluginList
+    inputs:
+      timeoutSeconds: "60"
+      runCommand:
+        - |
+          set -eu
+          WEB_ROOT="{{ WebRoot }}"
+          SITE_DIR="{{ SiteDir }}"
+          HAS_WPCLI=$(command -v wp >/dev/null 2>&1 && echo 1 || echo 0)
+
+          if [ -n "$SITE_DIR" ]; then
+            TARGETS="$SITE_DIR"
+          else
+            TARGETS=$(find "$WEB_ROOT" -maxdepth 4 -type d -name 'wp-content' 2>/dev/null | sed 's|/wp-content$||' | head -20)
+          fi
+
+          if [ -z "$TARGETS" ]; then
+            echo '{"error":"WordPress サイトが見つかりません"}' >&2
+            exit 1
+          fi
+
+          python3 - <<PYEOF
+          import json
+          import os
+          import re
+          import subprocess
+
+          targets = """$TARGETS""".strip().split("\n")
+          has_wpcli = int("$HAS_WPCLI")
+          all_results = []
+
+          for site in targets:
+              plugins_dir = os.path.join(site, "wp-content", "plugins")
+              if not os.path.isdir(plugins_dir):
+                  continue
+              plugins = []
+              if has_wpcli:
+                  try:
+                      out = subprocess.check_output(
+                          ["wp", "plugin", "list", "--format=json", "--allow-root", "--path=" + site],
+                          stderr=subprocess.DEVNULL,
+                          timeout=30,
+                      )
+                      plugins = json.loads(out)
+                  except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError):
+                      plugins = []
+
+              if not plugins:
+                  for d in sorted(os.listdir(plugins_dir)):
+                      pdir = os.path.join(plugins_dir, d)
+                      if not os.path.isdir(pdir):
+                          continue
+                      main_file = os.path.join(pdir, d + ".php")
+                      if not os.path.isfile(main_file):
+                          for f in os.listdir(pdir):
+                              if f.endswith(".php"):
+                                  main_file = os.path.join(pdir, f)
+                                  break
+                      version = None
+                      name = d
+                      if os.path.isfile(main_file):
+                          try:
+                              with open(main_file, errors='ignore') as fh:
+                                  header = fh.read(8192)
+                              vm = re.search(r"Version:\s*([^\r\n]+)", header)
+                              nm = re.search(r"Plugin Name:\s*([^\r\n]+)", header)
+                              if vm: version = vm.group(1).strip()
+                              if nm: name = nm.group(1).strip()
+                          except OSError:
+                              pass
+                      plugins.append({"name": name, "slug": d, "version": version})
+
+              all_results.append({"site": site, "plugins": plugins})
+
+          print(json.dumps(all_results, ensure_ascii=False))
+          PYEOF
