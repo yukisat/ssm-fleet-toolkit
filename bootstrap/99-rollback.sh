@@ -72,6 +72,8 @@ fi
 
 # DynamoDB
 echo "== DynamoDB Table =="
+# shellcheck disable=SC2016
+# JMESPath の `...` リテラルなので shell 展開させない（single quote 正解）
 tables=$(aws dynamodb list-tables --profile "$PROFILE" \
   --query 'TableNames[?starts_with(@, `ssm-fleet-tf-lock`)]' --output text 2>/dev/null || true)
 if [[ -n "$tables" ]]; then
@@ -88,6 +90,7 @@ fi
 
 # S3
 echo "== S3 Bucket =="
+# shellcheck disable=SC2016
 buckets=$(aws s3api list-buckets --profile "$PROFILE" \
   --query 'Buckets[?contains(Name, `ssm-fleet-tf-state`)].Name' --output text 2>/dev/null || true)
 if [[ -n "$buckets" ]]; then
