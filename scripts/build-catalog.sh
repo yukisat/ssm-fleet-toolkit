@@ -263,7 +263,6 @@ if playbooks_root.exists():
 catalog = {
     "version": "0.3.0",
     "generator": "scripts/build-catalog.sh",
-    "parser": "PyYAML" if HAS_YAML else "simple-fallback",
     "investigation_methods": {
         "ssm_documents": ssm_documents,
         "aws_playbooks": aws_playbooks,
