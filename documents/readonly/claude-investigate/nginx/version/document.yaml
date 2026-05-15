@@ -1,0 +1,43 @@
+schemaVersion: "2.2"
+description: |
+  nginx のバージョン・ビルド情報・有効モジュールを取得する readonly 調査 Document。
+  nginx -V の出力（stderr）を解析する。
+parameters:
+  NginxBinary:
+    type: String
+    default: /usr/sbin/nginx
+    description: nginx バイナリのパス
+mainSteps:
+  - action: aws:runShellScript
+    name: collectNginxVersion
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          BIN="{{ NginxBinary }}"
+          if [ ! -x "$BIN" ]; then
+            for candidate in /usr/sbin/nginx /usr/local/sbin/nginx /usr/local/nginx/sbin/nginx /opt/nginx/sbin/nginx; do
+              if [ -x "$candidate" ]; then BIN="$candidate"; break; fi
+            done
+          fi
+          if [ ! -x "$BIN" ]; then
+            echo "{\"error\":\"nginx binary not found\",\"searched\":\"$BIN\"}" >&2
+            exit 1
+          fi
+          # nginx -V は stderr に出力
+          raw=$("$BIN" -V 2>&1 || true)
+          version=$(echo "$raw" | grep -oE 'nginx version: nginx/[0-9.]+' | sed 's|nginx version: nginx/||')
+          built_with=$(echo "$raw" | grep -oE 'built with [^[:space:]].*' | head -1 | sed 's|built with ||')
+          tls=$(echo "$raw" | grep -oE 'TLS SNI support [a-z]+')
+          configure=$(echo "$raw" | grep -oE 'configure arguments: .*' | sed 's|configure arguments: ||' || true)
+          python3 - <<PYEOF
+          import json
+          print(json.dumps({
+              "binary": "$BIN",
+              "version": "$version",
+              "built_with": "$built_with",
+              "tls_sni": "$tls",
+              "configure_arguments": """$configure""".split(),
+          }, ensure_ascii=False))
+          PYEOF

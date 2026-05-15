@@ -1,0 +1,64 @@
+name: athena-cloudfront-top-uri
+category: athena
+subcategory: cloudfront
+safety: readonly
+description: |
+  CloudFront アクセスログから期間内のリクエスト数 Top URI を集計する。
+  異常なアクセス集中の調査に利用。Glue データカタログに CloudFront ログテーブル
+  が登録済みであることが前提。
+
+required_permissions:
+  - athena:StartQueryExecution
+  - athena:GetQueryExecution
+  - athena:GetQueryResults
+  - athena:StopQueryExecution
+  - glue:GetTable
+  - glue:GetDatabase
+  - glue:GetPartitions
+  - s3:GetObject
+  - s3:PutObject
+  - s3:ListBucket
+
+required_resources:
+  athena_workgroup: primary  # または環境固有のワークグループ名
+  athena_results_bucket: "*-athena-query-results*"
+  glue_database: cloudfront_logs  # 利用者環境に合わせて変更
+  glue_table: cf_access_log
+
+parameters:
+  - name: distribution_id
+    type: string
+    required: true
+    description: CloudFront ディストリビューション ID（例: E1XXXXXXXXXXXX）
+  - name: time_from
+    type: timestamp
+    required: true
+    description: 集計開始時刻 (UTC, ISO 8601)
+  - name: time_to
+    type: timestamp
+    required: true
+    description: 集計終了時刻 (UTC, ISO 8601)
+  - name: top_n
+    type: integer
+    default: 50
+
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      uri: { type: string }
+      request_count: { type: integer }
+      avg_bytes: { type: number }
+      total_bytes: { type: integer }
+      distinct_clients: { type: integer }
+
+estimated_runtime_seconds: 30
+estimated_cost_usd: 0.01  # Athena スキャン料金の目安、データ量で増減
+
+claude_hints: |
+  - 上位 URI が一つだけ突出していたら DDoS や bot 巡回を疑う
+  - distinct_clients が極端に少ない（数 IP）なら特定ソースからの攻撃の可能性
+  - 404 が上位の場合は設定ミスや欠損コンテンツを疑う
+  - 結果は数千行になる場合あり、top_n でフィルタすること
+  - 期間を短くしてからスキャン量を抑えるのがコスト対策

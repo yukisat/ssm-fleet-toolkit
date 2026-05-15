@@ -1,0 +1,45 @@
+name: claude-investigate-nginx-version
+category: nginx
+subcategory: middleware
+safety: readonly
+description: |
+  nginx のバージョン・ビルド情報・configure 引数を JSON で取得する。
+  CVE 影響調査やバージョン棚卸しに利用する。
+
+supported_os:
+  - amazon-linux-2
+  - amazon-linux-2023
+  - ubuntu-20.04
+  - ubuntu-22.04
+  - ubuntu-24.04
+  - rhel-9
+  - debian-12
+
+required_packages:
+  - nginx
+required_commands:
+  - nginx
+  - python3
+
+parameters:
+  - name: NginxBinary
+    type: string
+    default: /usr/sbin/nginx
+    description: nginx バイナリパス（見つからない場合は自動探索）
+
+output_schema:
+  type: object
+  properties:
+    binary: { type: string }
+    version: { type: string }
+    built_with: { type: string }
+    tls_sni: { type: string }
+    configure_arguments: { type: array, items: { type: string } }
+
+estimated_runtime_seconds: 1
+
+claude_hints: |
+  - version が新しい CVE の対象範囲にないか確認
+  - built_with の OpenSSL バージョンも合わせて確認（CVE が OpenSSL 由来の場合あり）
+  - configure_arguments に --with-http_v3_module 等のオプションが含まれているか
+  - パッケージ管理外（独自ビルド）の nginx は binary が /usr/local/nginx/sbin/nginx 等になる場合あり

@@ -1,8 +1,7 @@
 {
-  "$schema": "https://raw.githubusercontent.com/yukisat/ssm-fleet-toolkit/main/catalog.schema.json",
   "version": "0.1.0",
-  "generated_at": null,
-  "note": "現状は手動更新。将来的に scripts/build-catalog.sh で metadata.yaml から自動生成予定。",
+  "generator": "scripts/build-catalog.sh",
+  "note": "metadata.yaml から自動生成。手動編集禁止。利用者は ./scripts/build-catalog.sh を実行して更新する（PyYAML 必要）。",
   "investigation_methods": {
     "ssm_documents": [
       {
@@ -11,12 +10,143 @@
         "category": "os",
         "subcategory": "linux-common",
         "safety": "readonly",
-        "description": "ディスク使用量を JSON 形式で取得",
-        "supported_os": ["amazon-linux-2", "amazon-linux-2023", "ubuntu-22.04", "rhel-9"],
+        "description": "ディスク使用量を JSON 形式で取得する。df -P -k の出力を解析して機械可読な配列に整形する。",
+        "supported_os": [
+          "amazon-linux-2",
+          "amazon-linux-2023",
+          "ubuntu-20.04",
+          "ubuntu-22.04",
+          "ubuntu-24.04",
+          "rhel-9",
+          "debian-12"
+        ],
         "parameters": [],
+        "estimated_runtime_seconds": 1
+      },
+      {
+        "name": "claude-investigate-os-memory-usage",
+        "path": "documents/readonly/claude-investigate/os/memory-usage",
+        "category": "os",
+        "subcategory": "linux-common",
+        "safety": "readonly",
+        "description": "メモリ使用量とスワップ使用量を JSON で取得する。/proc/meminfo から集計。",
+        "supported_os": [
+          "amazon-linux-2",
+          "amazon-linux-2023",
+          "ubuntu-20.04",
+          "ubuntu-22.04",
+          "ubuntu-24.04",
+          "rhel-9",
+          "debian-12"
+        ],
+        "parameters": [],
+        "estimated_runtime_seconds": 1
+      },
+      {
+        "name": "claude-investigate-os-process-list",
+        "path": "documents/readonly/claude-investigate/os/process-list",
+        "category": "os",
+        "subcategory": "linux-common",
+        "safety": "readonly",
+        "description": "CPU またはメモリ使用率の上位プロセスを取得する。デフォルトは CPU 上位 20 プロセス。",
+        "supported_os": [
+          "amazon-linux-2",
+          "amazon-linux-2023",
+          "ubuntu-20.04",
+          "ubuntu-22.04",
+          "ubuntu-24.04",
+          "rhel-9",
+          "debian-12"
+        ],
+        "parameters": [
+          {
+            "name": "TopN",
+            "type": "string",
+            "default": "20",
+            "description": "取得する上位プロセス数"
+          },
+          {
+            "name": "SortKey",
+            "type": "string",
+            "default": "cpu",
+            "allowed_values": ["cpu", "mem"],
+            "description": "ソートキー"
+          }
+        ],
+        "estimated_runtime_seconds": 1
+      },
+      {
+        "name": "claude-investigate-nginx-version",
+        "path": "documents/readonly/claude-investigate/nginx/version",
+        "category": "nginx",
+        "subcategory": "middleware",
+        "safety": "readonly",
+        "description": "nginx のバージョン・ビルド情報・configure 引数を JSON で取得する。CVE 影響調査やバージョン棚卸しに利用する。",
+        "supported_os": [
+          "amazon-linux-2",
+          "amazon-linux-2023",
+          "ubuntu-20.04",
+          "ubuntu-22.04",
+          "ubuntu-24.04",
+          "rhel-9",
+          "debian-12"
+        ],
+        "parameters": [
+          {
+            "name": "NginxBinary",
+            "type": "string",
+            "default": "/usr/sbin/nginx",
+            "description": "nginx バイナリパス（見つからない場合は自動探索）"
+          }
+        ],
         "estimated_runtime_seconds": 1
       }
     ],
-    "aws_playbooks": []
+    "aws_playbooks": [
+      {
+        "name": "athena-cloudfront-top-uri",
+        "path": "playbooks/readonly/athena/cloudfront-top-uri",
+        "category": "athena",
+        "subcategory": "cloudfront",
+        "safety": "readonly",
+        "description": "CloudFront アクセスログから期間内のリクエスト数 Top URI を集計する。異常なアクセス集中の調査に利用。",
+        "required_permissions": [
+          "athena:StartQueryExecution",
+          "athena:GetQueryExecution",
+          "athena:GetQueryResults",
+          "athena:StopQueryExecution",
+          "glue:GetTable",
+          "glue:GetDatabase",
+          "glue:GetPartitions",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ],
+        "parameters": [
+          {
+            "name": "distribution_id",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "time_from",
+            "type": "timestamp",
+            "required": true
+          },
+          {
+            "name": "time_to",
+            "type": "timestamp",
+            "required": true
+          },
+          {
+            "name": "top_n",
+            "type": "integer",
+            "default": 50
+          }
+        ],
+        "estimated_runtime_seconds": 30,
+        "estimated_cost_usd": 0.01
+      }
+    ]
   }
 }

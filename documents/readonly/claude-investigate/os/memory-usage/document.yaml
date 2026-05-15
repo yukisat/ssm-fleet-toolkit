@@ -1,0 +1,39 @@
+schemaVersion: "2.2"
+description: |
+  メモリ使用量を JSON 形式で取得する readonly 調査 Document。
+  /proc/meminfo を解析して機械可読な形に整形する。
+parameters: {}
+mainSteps:
+  - action: aws:runShellScript
+    name: collectMemoryUsage
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          awk '
+            BEGIN { print "{" }
+            /^MemTotal:/      { mem_total=$2 }
+            /^MemFree:/       { mem_free=$2 }
+            /^MemAvailable:/  { mem_avail=$2 }
+            /^Buffers:/       { buffers=$2 }
+            /^Cached:/        { cached=$2 }
+            /^SwapTotal:/     { swap_total=$2 }
+            /^SwapFree:/      { swap_free=$2 }
+            END {
+              swap_used = swap_total - swap_free
+              swap_pct = (swap_total > 0) ? (swap_used / swap_total * 100) : 0
+              mem_used = mem_total - mem_avail
+              mem_pct = mem_used / mem_total * 100
+              printf "  \"total_bytes\": %d,\n", mem_total * 1024
+              printf "  \"available_bytes\": %d,\n", mem_avail * 1024
+              printf "  \"used_bytes\": %d,\n", mem_used * 1024
+              printf "  \"use_percent\": %.1f,\n", mem_pct
+              printf "  \"buffers_bytes\": %d,\n", buffers * 1024
+              printf "  \"cached_bytes\": %d,\n", cached * 1024
+              printf "  \"swap_total_bytes\": %d,\n", swap_total * 1024
+              printf "  \"swap_used_bytes\": %d,\n", swap_used * 1024
+              printf "  \"swap_use_percent\": %.1f\n", swap_pct
+              print "}"
+            }
+          ' /proc/meminfo
