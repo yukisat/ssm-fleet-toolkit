@@ -1,0 +1,28 @@
+name: claude-investigate-nginx-vhost-list
+category: nginx
+subcategory: middleware
+safety: readonly
+description: |
+  nginx 設定ディレクトリから vhost (server) ブロックを抽出し、
+  server_name / root / listen を JSON で取得する。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [python3]
+parameters:
+  - name: ConfigDir
+    type: string
+    default: ""
+    description: 空なら conf.d / sites-enabled / vhosts.d を自動探索
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      file: { type: string }
+      server_names: { type: array, items: { type: string } }
+      roots: { type: array, items: { type: string } }
+      listens: { type: array, items: { type: string } }
+estimated_runtime_seconds: 2
+claude_hints: |
+  - server_names の重複は意図的か（ステージング/本番 SSL 分離など）確認
+  - 同じ port で同じ server_name が複数 → 警告レベル
+  - root が想定外のパス → 設定誤りの可能性

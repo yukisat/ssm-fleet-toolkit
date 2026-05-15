@@ -1,0 +1,33 @@
+name: claude-investigate-os-system-messages
+category: os
+subcategory: linux-common
+safety: readonly
+description: |
+  /var/log/messages または /var/log/syslog から直近のログを取得する。
+  自動検出 + フィルタ対応。
+supported_os:
+  - amazon-linux-2
+  - ubuntu-20.04
+  - ubuntu-22.04
+  - rhel-9
+  - debian-12
+required_commands: [tail]
+parameters:
+  - name: Lines
+    type: string
+    default: "100"
+  - name: Filter
+    type: string
+    default: ""
+    description: grep フィルタキーワード
+  - name: LogPath
+    type: string
+    default: ""
+    description: 明示指定する場合のログパス
+output_schema:
+  type: string
+estimated_runtime_seconds: 1
+claude_hints: |
+  - OOM Killer 発火は "Out of memory" / "Killed process" で検索
+  - カーネルパニックは "kernel panic" / "BUG:" を検索
+  - systemd 採用環境では journalctl Document の方が柔軟

@@ -1,0 +1,50 @@
+schemaVersion: "2.2"
+description: |
+  nginx アクセスログを取得する readonly Document。
+  ステータスコード・URL パターン・ログパスでフィルタ可能。
+parameters:
+  LogPath:
+    type: String
+    description: ログパス。空なら /var/log/nginx/access.log を使用
+    default: ""
+  StatusCode:
+    type: String
+    description: ステータスコードフィルタ（例 404, 500, 50 で 5xx）。空ならフィルタなし
+    default: ""
+  UrlPattern:
+    type: String
+    description: URL パターン（grep 文字列）。空ならフィルタなし
+    default: ""
+  Lines:
+    type: String
+    description: 取得行数
+    default: "100"
+mainSteps:
+  - action: aws:runShellScript
+    name: tailNginxAccess
+    inputs:
+      timeoutSeconds: "30"
+      runCommand:
+        - |
+          set -eu
+          LOG="{{ LogPath }}"
+          if [ -z "$LOG" ]; then LOG="/var/log/nginx/access.log"; fi
+          if [ ! -f "$LOG" ]; then
+            echo "ログファイルが見つかりません: $LOG" >&2
+            ls /var/log/nginx/ 2>/dev/null >&2 || true
+            exit 1
+          fi
+          STATUS="{{ StatusCode }}"
+          URL="{{ UrlPattern }}"
+          LINES="{{ Lines }}"
+
+          echo "=== $LOG (last $LINES lines, status=$STATUS, url=$URL) ==="
+          if [ -z "$STATUS" ] && [ -z "$URL" ]; then
+            tail -n "$LINES" "$LOG"
+          elif [ -n "$STATUS" ] && [ -z "$URL" ]; then
+            grep " $STATUS " "$LOG" | tail -n "$LINES"
+          elif [ -z "$STATUS" ] && [ -n "$URL" ]; then
+            grep -- "$URL" "$LOG" | tail -n "$LINES"
+          else
+            grep " $STATUS " "$LOG" | grep -- "$URL" | tail -n "$LINES"
+          fi

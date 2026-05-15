@@ -1,0 +1,22 @@
+name: claude-investigate-nginx-config
+category: nginx
+subcategory: middleware
+safety: readonly
+description: nginx 設定ファイルの内容またはディレクトリ一覧を取得する。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [ls, cat]
+parameters:
+  - name: ConfigFile
+    type: string
+    default: ""
+    description: 確認する設定ファイル名
+  - name: ConfigDir
+    type: string
+    default: ""
+output_schema:
+  type: string
+estimated_runtime_seconds: 1
+claude_hints: |
+  - rewrite, proxy_pass, return ディレクティブを確認
+  - 想定外のヘッダーや security_header 欠如を検出
+  - SSL 設定（ssl_protocols, ssl_ciphers）の世代確認

@@ -1,0 +1,26 @@
+schemaVersion: "2.2"
+description: |
+  ネットワーク接続の集計を JSON で取得する readonly 調査 Document。
+  ss コマンドで TCP 接続状態を State 別に集計する。
+parameters:
+  TopN:
+    type: String
+    default: "20"
+    description: 上位アドレスの取得件数
+mainSteps:
+  - action: aws:runShellScript
+    name: collectNetworkConnections
+    inputs:
+      timeoutSeconds: "20"
+      runCommand:
+        - |
+          set -eu
+          TOP_N="{{ TopN }}"
+
+          # State 別集計
+          state_counts=$(ss -tan 2>/dev/null | awk 'NR>1 {print $1}' | sort | uniq -c | awk '{printf "\"%s\":%d,", $2, $1}' | sed 's/,$//')
+
+          # 接続元 IP 上位
+          top_remote=$(ss -tan 2>/dev/null | awk 'NR>1 && $5 ~ /:/ {print $5}' | awk -F: '{OFS=":"; NF--; print}' | sort | uniq -c | sort -rn | head -"$TOP_N" | awk '{printf "%s{\"address\":\"%s\",\"count\":%d}", (NR==1?"":","), $2, $1}')
+
+          printf '{"state_counts":{%s},"top_remote_addresses":[%s]}\n' "$state_counts" "$top_remote"

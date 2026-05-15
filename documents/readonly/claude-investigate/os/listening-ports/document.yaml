@@ -1,0 +1,23 @@
+schemaVersion: "2.2"
+description: LISTEN 状態のポートとプロセスを JSON で取得
+parameters: {}
+mainSteps:
+  - action: aws:runShellScript
+    name: collectListeningPorts
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          ss -tlnp 2>/dev/null | awk 'NR>1 {
+            split($4, addr, ":")
+            port = addr[length(addr)]
+            ip = $4
+            sub(":[0-9]+$", "", ip)
+            process = ""
+            if (match($0, /users:\(\("[^"]+/)) {
+              process = substr($0, RSTART+9, RLENGTH-9)
+            }
+            printf "%s{\"protocol\":\"tcp\",\"address\":\"%s\",\"port\":%s,\"process\":\"%s\"}", (NR==2?"[":","), ip, port, process
+          }
+          END { print "]" }'

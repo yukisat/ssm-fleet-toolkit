@@ -1,0 +1,31 @@
+name: claude-investigate-nginx-access-log
+category: nginx
+subcategory: middleware
+safety: readonly
+description: |
+  nginx アクセスログを tail し、ステータスコード・URL パターンでフィルタ可能。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [tail, grep]
+parameters:
+  - name: LogPath
+    type: string
+    default: ""
+    description: 空なら /var/log/nginx/access.log
+  - name: StatusCode
+    type: string
+    default: ""
+    description: 例 404, 500, 50（5xx）
+  - name: UrlPattern
+    type: string
+    default: ""
+  - name: Lines
+    type: string
+    default: "100"
+output_schema:
+  type: string
+estimated_runtime_seconds: 2
+claude_hints: |
+  - 4xx 大量発生 → 設定ミス・bot アクセス
+  - 特定 URL に集中 → DDoS / 攻撃の可能性
+  - 同一 IP からの連続 5xx → 攻撃か障害か要切り分け
+  - User-Agent も合わせて確認（ログフォーマットに含まれていれば）

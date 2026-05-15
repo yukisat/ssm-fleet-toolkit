@@ -1,0 +1,22 @@
+name: claude-investigate-php-fpm-pool-config
+category: php-fpm
+subcategory: middleware
+safety: readonly
+description: PHP-FPM プール設定（pm 系・user/group・listen・slowlog）を JSON で取得する。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [python3]
+parameters:
+  - name: ConfigDir
+    type: string
+    default: ""
+output_schema:
+  type: array
+  items:
+    type: object
+estimated_runtime_seconds: 1
+claude_hints: |
+  - pm=static は max_children 分のプロセスを常駐、メモリ要件高い
+  - pm=dynamic / ondemand は負荷に応じて変動、メモリ節約
+  - pm.max_children が低すぎると 502 / queue 詰まり
+  - request_terminate_timeout 未設定 → スロー処理でプロセス占有のリスク
+  - slowlog 設定があれば php-fpm-slow-log Document でログ確認可能

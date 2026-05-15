@@ -1,0 +1,39 @@
+schemaVersion: "2.2"
+description: |
+  nginx エラーログを取得する readonly Document。
+  共通エラーログまたは vhost ごとのエラーログを指定可能。
+parameters:
+  LogPath:
+    type: String
+    description: ログパス。空なら /var/log/nginx/error.log を使用
+    default: ""
+  Lines:
+    type: String
+    description: 取得行数
+    default: "50"
+  Filter:
+    type: String
+    description: grep フィルタキーワード。空ならフィルタなし
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: tailNginxError
+    inputs:
+      timeoutSeconds: "20"
+      runCommand:
+        - |
+          set -eu
+          LOG="{{ LogPath }}"
+          if [ -z "$LOG" ]; then LOG="/var/log/nginx/error.log"; fi
+          if [ ! -f "$LOG" ]; then
+            echo "ログファイルが見つかりません: $LOG" >&2
+            echo "/var/log/nginx/ 配下:" >&2
+            ls /var/log/nginx/ 2>/dev/null >&2 || echo "ディレクトリなし" >&2
+            exit 1
+          fi
+          echo "=== $LOG ==="
+          if [ -z '{{ Filter }}' ]; then
+            tail -n {{ Lines }} "$LOG"
+          else
+            tail -n {{ Lines }} "$LOG" | grep -- '{{ Filter }}' || echo "(該当行なし)"
+          fi

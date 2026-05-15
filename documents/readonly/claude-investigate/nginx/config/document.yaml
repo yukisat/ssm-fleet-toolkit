@@ -1,0 +1,46 @@
+schemaVersion: "2.2"
+description: |
+  nginx 設定ファイルの内容または一覧を取得する readonly Document。
+  ConfigFile 指定で特定ファイル、空なら設定ディレクトリの一覧。
+parameters:
+  ConfigFile:
+    type: String
+    description: 確認する設定ファイル名（例 example.com.conf）。空なら一覧
+    default: ""
+  ConfigDir:
+    type: String
+    description: nginx 設定ディレクトリ。空なら自動探索
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: showNginxConfig
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          CONFIG_DIR="{{ ConfigDir }}"
+          if [ -z "$CONFIG_DIR" ]; then
+            for candidate in /etc/nginx/conf.d /etc/nginx/sites-enabled /etc/nginx/vhosts.d; do
+              if [ -d "$candidate" ]; then CONFIG_DIR="$candidate"; break; fi
+            done
+          fi
+          if [ -z "$CONFIG_DIR" ] || [ ! -d "$CONFIG_DIR" ]; then
+            echo "nginx 設定ディレクトリが見つかりません" >&2
+            exit 1
+          fi
+          CONF="{{ ConfigFile }}"
+          if [ -z "$CONF" ]; then
+            echo "=== $CONFIG_DIR ==="
+            ls -la "$CONFIG_DIR"
+          else
+            FULL="$CONFIG_DIR/$CONF"
+            if [ -f "$FULL" ]; then
+              echo "=== $FULL ==="
+              cat "$FULL"
+            else
+              echo "ファイルが見つかりません: $FULL" >&2
+              ls "$CONFIG_DIR" | grep -- "$CONF" || true
+              exit 1
+            fi
+          fi

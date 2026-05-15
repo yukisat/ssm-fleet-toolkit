@@ -1,0 +1,37 @@
+name: claude-investigate-os-journalctl
+category: os
+subcategory: linux-common
+safety: readonly
+description: |
+  journalctl からユニット・優先度・期間で絞ったログを取得する。
+supported_os:
+  - amazon-linux-2023
+  - ubuntu-20.04
+  - ubuntu-22.04
+  - ubuntu-24.04
+  - rhel-9
+  - debian-12
+required_commands: [journalctl]
+parameters:
+  - name: Unit
+    type: string
+    default: ""
+    description: 対象 systemd ユニット名（空で全体）
+  - name: Priority
+    type: string
+    default: warning
+    description: emerg / alert / crit / err / warning / notice / info / debug
+  - name: Since
+    type: string
+    default: "1 hour ago"
+  - name: Lines
+    type: string
+    default: "200"
+output_schema:
+  type: string
+  description: テキストログ（JSON ではなく生ログ）
+estimated_runtime_seconds: 3
+claude_hints: |
+  - エラー多発時は Priority を err にして対象を絞る
+  - 特定サービスの調査時は Unit 指定（nginx, php-fpm, mysqld 等）
+  - AL2 系（systemd 未使用環境）では失敗する。`messages` や `nginx-error-log` で代用

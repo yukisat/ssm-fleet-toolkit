@@ -1,0 +1,49 @@
+name: claude-investigate-os-network-connections
+category: os
+subcategory: linux-common
+safety: readonly
+description: |
+  TCP 接続状態の集計と接続元アドレスの上位を JSON で取得する。
+  ss -tan の出力を解析。
+
+supported_os:
+  - amazon-linux-2
+  - amazon-linux-2023
+  - ubuntu-20.04
+  - ubuntu-22.04
+  - ubuntu-24.04
+  - rhel-9
+  - debian-12
+
+required_packages: []
+required_commands:
+  - ss
+  - awk
+
+parameters:
+  - name: TopN
+    type: string
+    default: "20"
+    description: 上位接続元アドレスの取得件数
+
+output_schema:
+  type: object
+  properties:
+    state_counts:
+      type: object
+      description: TCP State ごとの接続数（ESTAB, TIME-WAIT, LISTEN 等）
+    top_remote_addresses:
+      type: array
+      items:
+        type: object
+        properties:
+          address: { type: string }
+          count: { type: integer }
+
+estimated_runtime_seconds: 2
+
+claude_hints: |
+  - TIME-WAIT 多発はカーネルパラメータ (net.ipv4.tcp_tw_reuse) 調整候補
+  - ESTAB が想定外に多い → コネクションリーク調査
+  - top_remote_addresses が特定 IP に偏る → DDoS / bot の可能性
+  - SYN_RECV 多発は SYN flood の可能性

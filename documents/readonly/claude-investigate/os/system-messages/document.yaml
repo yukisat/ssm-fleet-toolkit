@@ -1,0 +1,40 @@
+schemaVersion: "2.2"
+description: |
+  /var/log/messages (または /var/log/syslog) から直近のログを取得する readonly Document。
+parameters:
+  Lines:
+    type: String
+    description: 取得行数
+    default: "100"
+  Filter:
+    type: String
+    description: grep フィルタキーワード。空ならフィルタなし
+    default: ""
+  LogPath:
+    type: String
+    description: ログファイルパス。空なら自動検出
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: tailMessages
+    inputs:
+      timeoutSeconds: "20"
+      runCommand:
+        - |
+          set -eu
+          LOG="{{ LogPath }}"
+          if [ -z "$LOG" ]; then
+            for candidate in /var/log/messages /var/log/syslog; do
+              if [ -f "$candidate" ]; then LOG="$candidate"; break; fi
+            done
+          fi
+          if [ -z "$LOG" ] || [ ! -f "$LOG" ]; then
+            echo "ログファイルが見つかりません。journalctl Document を試してください" >&2
+            exit 1
+          fi
+          echo "=== $LOG ==="
+          if [ -z '{{ Filter }}' ]; then
+            tail -n {{ Lines }} "$LOG"
+          else
+            tail -n {{ Lines }} "$LOG" | grep -- '{{ Filter }}' || echo "(該当行なし)"
+          fi
