@@ -41,6 +41,8 @@ run() {
     echo "[DRY-RUN] $*"
   else
     echo "[EXEC] $*"
+    # shellcheck disable=SC2294
+    # 引数を 1 つの文字列として受け取り eval する（呼び出し側で長い CLI 文字列を渡しているため）
     eval "$@"
   fi
 }

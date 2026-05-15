@@ -15,6 +15,12 @@ resource "aws_ssm_document" "this" {
 
   content = file(var.document_path)
 
+  # permissions は map 属性。空配列の場合は null で属性を作らない
+  permissions = length(var.shared_account_ids) > 0 ? {
+    type        = "Share"
+    account_ids = join(",", var.shared_account_ids)
+  } : null
+
   tags = merge(
     {
       "ssm-fleet:managed-by" = "ssm-fleet-toolkit"
@@ -23,12 +29,4 @@ resource "aws_ssm_document" "this" {
     },
     var.tags,
   )
-
-  dynamic "permissions" {
-    for_each = length(var.shared_account_ids) > 0 ? [1] : []
-    content {
-      type        = "Share"
-      account_ids = join(",", var.shared_account_ids)
-    }
-  }
 }
