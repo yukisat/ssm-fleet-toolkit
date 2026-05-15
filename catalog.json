@@ -764,7 +764,7 @@
             "name": "distribution_id",
             "type": "string",
             "required": true,
-            "description": "CloudFront ディストリビューション ID（例: E1XXXXXXXXXXXX）"
+            "description": "CloudFront ディストリビューション ID（例 E1XXXXXXXXXXXX）"
           },
           {
             "name": "time_from",
