@@ -16,8 +16,8 @@ locals {
 
   # 機能フラグごとに inline policy JSON を合成
   policy_files = compact([
-    var.include_ssm        ? "${path.module}/policies/claude-investigator-ssm.json" : "",
-    var.include_athena     ? "${path.module}/policies/claude-investigator-athena.json" : "",
+    var.include_ssm ? "${path.module}/policies/claude-investigator-ssm.json" : "",
+    var.include_athena ? "${path.module}/policies/claude-investigator-athena.json" : "",
     var.include_cloudwatch ? "${path.module}/policies/claude-investigator-cloudwatch.json" : "",
   ])
 

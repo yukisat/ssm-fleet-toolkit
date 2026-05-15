@@ -1,0 +1,53 @@
+name: claude-investigate-os-process-list
+category: os
+subcategory: linux-common
+safety: readonly
+description: |
+  CPU またはメモリ使用率の上位プロセスを取得する。
+  デフォルトは CPU 上位 20 プロセス。
+
+supported_os:
+  - amazon-linux-2
+  - amazon-linux-2023
+  - ubuntu-20.04
+  - ubuntu-22.04
+  - ubuntu-24.04
+  - rhel-9
+  - debian-12
+
+required_packages: []
+required_commands:
+  - ps
+  - awk
+
+parameters:
+  - name: TopN
+    type: string
+    default: "20"
+    description: 取得する上位プロセス数
+  - name: SortKey
+    type: string
+    default: cpu
+    allowed_values: [cpu, mem]
+    description: ソートキー
+
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      pid: { type: integer }
+      user: { type: string }
+      cpu_percent: { type: number }
+      mem_percent: { type: number }
+      rss_kb: { type: integer }
+      elapsed: { type: string }
+      command: { type: string }
+
+estimated_runtime_seconds: 1
+
+claude_hints: |
+  - CPU 上位が php-fpm や nginx ワーカーなら通常負荷の延長を疑う
+  - 単一プロセスが CPU 100% 近い場合は無限ループや busy loop の可能性
+  - mem 上位プロセスが OOM の手前ならスワップ・swappiness も合わせて確認
+  - command が <defunct> ならゾンビプロセス、親プロセスの状態も確認

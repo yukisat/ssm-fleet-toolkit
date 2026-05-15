@@ -1,0 +1,36 @@
+schemaVersion: "2.2"
+description: |
+  CPU・メモリ使用率の上位プロセスを取得する readonly 調査 Document。
+  ps の出力を JSON 配列に整形する。
+parameters:
+  TopN:
+    type: String
+    default: "20"
+    description: 取得する上位プロセス数
+  SortKey:
+    type: String
+    default: "cpu"
+    allowedValues:
+      - cpu
+      - mem
+mainSteps:
+  - action: aws:runShellScript
+    name: collectProcessList
+    inputs:
+      timeoutSeconds: "30"
+      runCommand:
+        - |
+          set -eu
+          TOP_N="{{ TopN }}"
+          SORT_KEY="{{ SortKey }}"
+          if [ "$SORT_KEY" = "mem" ]; then
+            SORT_FIELD="%mem"
+          else
+            SORT_FIELD="%cpu"
+          fi
+          ps -eo pid,user,pcpu,pmem,rss,etime,comm --sort=-${SORT_FIELD} | \
+            awk -v top="$TOP_N" 'NR>1 && NR<=top+1 {
+              printf "%s{\"pid\":%d,\"user\":\"%s\",\"cpu_percent\":%.1f,\"mem_percent\":%.1f,\"rss_kb\":%d,\"elapsed\":\"%s\",\"command\":\"%s\"}",
+                (NR==2?"[":","), $1, $2, $3, $4, $5, $6, $7
+            }
+            END { print "]" }'
