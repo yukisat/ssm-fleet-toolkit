@@ -1,152 +1,41 @@
 {
-  "version": "0.1.0",
+  "version": "0.3.0",
   "generator": "scripts/build-catalog.sh",
   "note": "metadata.yaml から自動生成。手動編集禁止。利用者は ./scripts/build-catalog.sh を実行して更新する（PyYAML 必要）。",
   "investigation_methods": {
     "ssm_documents": [
-      {
-        "name": "claude-investigate-os-disk-usage",
-        "path": "documents/readonly/claude-investigate/os/disk-usage",
-        "category": "os",
-        "subcategory": "linux-common",
-        "safety": "readonly",
-        "description": "ディスク使用量を JSON 形式で取得する。df -P -k の出力を解析して機械可読な配列に整形する。",
-        "supported_os": [
-          "amazon-linux-2",
-          "amazon-linux-2023",
-          "ubuntu-20.04",
-          "ubuntu-22.04",
-          "ubuntu-24.04",
-          "rhel-9",
-          "debian-12"
-        ],
-        "parameters": [],
-        "estimated_runtime_seconds": 1
-      },
-      {
-        "name": "claude-investigate-os-memory-usage",
-        "path": "documents/readonly/claude-investigate/os/memory-usage",
-        "category": "os",
-        "subcategory": "linux-common",
-        "safety": "readonly",
-        "description": "メモリ使用量とスワップ使用量を JSON で取得する。/proc/meminfo から集計。",
-        "supported_os": [
-          "amazon-linux-2",
-          "amazon-linux-2023",
-          "ubuntu-20.04",
-          "ubuntu-22.04",
-          "ubuntu-24.04",
-          "rhel-9",
-          "debian-12"
-        ],
-        "parameters": [],
-        "estimated_runtime_seconds": 1
-      },
-      {
-        "name": "claude-investigate-os-process-list",
-        "path": "documents/readonly/claude-investigate/os/process-list",
-        "category": "os",
-        "subcategory": "linux-common",
-        "safety": "readonly",
-        "description": "CPU またはメモリ使用率の上位プロセスを取得する。デフォルトは CPU 上位 20 プロセス。",
-        "supported_os": [
-          "amazon-linux-2",
-          "amazon-linux-2023",
-          "ubuntu-20.04",
-          "ubuntu-22.04",
-          "ubuntu-24.04",
-          "rhel-9",
-          "debian-12"
-        ],
-        "parameters": [
-          {
-            "name": "TopN",
-            "type": "string",
-            "default": "20",
-            "description": "取得する上位プロセス数"
-          },
-          {
-            "name": "SortKey",
-            "type": "string",
-            "default": "cpu",
-            "allowed_values": ["cpu", "mem"],
-            "description": "ソートキー"
-          }
-        ],
-        "estimated_runtime_seconds": 1
-      },
-      {
-        "name": "claude-investigate-nginx-version",
-        "path": "documents/readonly/claude-investigate/nginx/version",
-        "category": "nginx",
-        "subcategory": "middleware",
-        "safety": "readonly",
-        "description": "nginx のバージョン・ビルド情報・configure 引数を JSON で取得する。CVE 影響調査やバージョン棚卸しに利用する。",
-        "supported_os": [
-          "amazon-linux-2",
-          "amazon-linux-2023",
-          "ubuntu-20.04",
-          "ubuntu-22.04",
-          "ubuntu-24.04",
-          "rhel-9",
-          "debian-12"
-        ],
-        "parameters": [
-          {
-            "name": "NginxBinary",
-            "type": "string",
-            "default": "/usr/sbin/nginx",
-            "description": "nginx バイナリパス（見つからない場合は自動探索）"
-          }
-        ],
-        "estimated_runtime_seconds": 1
-      }
+      { "name": "claude-investigate-apache-version", "path": "documents/readonly/claude-investigate/apache/version", "category": "apache", "subcategory": "middleware", "safety": "readonly", "description": "Apache HTTP Server のバージョン・MPM・有効モジュールを JSON で取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-mysql-slow-log", "path": "documents/readonly/claude-investigate/mysql/slow-log", "category": "mysql", "subcategory": "middleware", "safety": "readonly", "description": "MySQL / MariaDB のスロークエリログを取得する。", "estimated_runtime_seconds": 2 },
+      { "name": "claude-investigate-mysql-status", "path": "documents/readonly/claude-investigate/mysql/status", "category": "mysql", "subcategory": "middleware", "safety": "readonly", "description": "MySQL / MariaDB のステータス変数を取得する。", "estimated_runtime_seconds": 2 },
+      { "name": "claude-investigate-mysql-version", "path": "documents/readonly/claude-investigate/mysql/version", "category": "mysql", "subcategory": "middleware", "safety": "readonly", "description": "MySQL / MariaDB のバージョン・ビルド情報を取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-nginx-access-log", "path": "documents/readonly/claude-investigate/nginx/access-log", "category": "nginx", "subcategory": "middleware", "safety": "readonly", "description": "nginx アクセスログを tail し、ステータスコード・URL パターンでフィルタ可能。", "estimated_runtime_seconds": 2 },
+      { "name": "claude-investigate-nginx-config", "path": "documents/readonly/claude-investigate/nginx/config", "category": "nginx", "subcategory": "middleware", "safety": "readonly", "description": "nginx 設定ファイルの内容またはディレクトリ一覧を取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-nginx-cve-pattern-scan", "path": "documents/readonly/claude-investigate/nginx/cve-pattern-scan", "category": "nginx", "subcategory": "security", "safety": "readonly", "description": "nginx 設定の任意パターン検索。CVE 影響調査用の汎用 Document。", "estimated_runtime_seconds": 2 },
+      { "name": "claude-investigate-nginx-error-log", "path": "documents/readonly/claude-investigate/nginx/error-log", "category": "nginx", "subcategory": "middleware", "safety": "readonly", "description": "nginx エラーログを tail し、必要に応じてフィルタする。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-nginx-version", "path": "documents/readonly/claude-investigate/nginx/version", "category": "nginx", "subcategory": "middleware", "safety": "readonly", "description": "nginx のバージョン・ビルド情報・configure 引数を JSON で取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-nginx-vhost-list", "path": "documents/readonly/claude-investigate/nginx/vhost-list", "category": "nginx", "subcategory": "middleware", "safety": "readonly", "description": "nginx 設定ディレクトリから vhost (server) ブロックを抽出し、server_name / root / listen を JSON で取得する。", "estimated_runtime_seconds": 2 },
+      { "name": "claude-investigate-os-disk-usage", "path": "documents/readonly/claude-investigate/os/disk-usage", "category": "os", "subcategory": "linux-common", "safety": "readonly", "description": "ディスク使用量を JSON 形式で取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-os-journalctl", "path": "documents/readonly/claude-investigate/os/journalctl", "category": "os", "subcategory": "linux-common", "safety": "readonly", "description": "journalctl からユニット・優先度・期間で絞ったログを取得する。", "estimated_runtime_seconds": 3 },
+      { "name": "claude-investigate-os-listening-ports", "path": "documents/readonly/claude-investigate/os/listening-ports", "category": "os", "subcategory": "linux-common", "safety": "readonly", "description": "LISTEN 状態の TCP ポートとリッスンプロセスを JSON で取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-os-load-average", "path": "documents/readonly/claude-investigate/os/load-average", "category": "os", "subcategory": "linux-common", "safety": "readonly", "description": "ロードアベレージ（1/5/15 分）とコア数、コアあたり負荷を JSON で取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-os-memory-usage", "path": "documents/readonly/claude-investigate/os/memory-usage", "category": "os", "subcategory": "linux-common", "safety": "readonly", "description": "メモリ使用量とスワップ使用量を JSON で取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-os-network-connections", "path": "documents/readonly/claude-investigate/os/network-connections", "category": "os", "subcategory": "linux-common", "safety": "readonly", "description": "TCP 接続状態の集計と接続元アドレスの上位を JSON で取得する。", "estimated_runtime_seconds": 2 },
+      { "name": "claude-investigate-os-process-list", "path": "documents/readonly/claude-investigate/os/process-list", "category": "os", "subcategory": "linux-common", "safety": "readonly", "description": "CPU またはメモリ使用率の上位プロセスを取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-os-system-messages", "path": "documents/readonly/claude-investigate/os/system-messages", "category": "os", "subcategory": "linux-common", "safety": "readonly", "description": "/var/log/messages または /var/log/syslog から直近のログを取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-php-error-log", "path": "documents/readonly/claude-investigate/php/error-log", "category": "php", "subcategory": "middleware", "safety": "readonly", "description": "PHP エラーログを取得する。ログパス自動探索 + grep フィルタ対応。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-php-version", "path": "documents/readonly/claude-investigate/php/version", "category": "php", "subcategory": "middleware", "safety": "readonly", "description": "PHP のバージョン・SAPI・主要モジュール一覧を JSON で取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-php-fpm-pool-config", "path": "documents/readonly/claude-investigate/php-fpm/pool-config", "category": "php-fpm", "subcategory": "middleware", "safety": "readonly", "description": "PHP-FPM プール設定を JSON で取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-php-fpm-slow-log", "path": "documents/readonly/claude-investigate/php-fpm/slow-log", "category": "php-fpm", "subcategory": "middleware", "safety": "readonly", "description": "PHP-FPM スロークエリログを取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-security-ssh-config", "path": "documents/readonly/claude-investigate/security/ssh-config", "category": "security", "subcategory": "ssh", "safety": "readonly", "description": "SSH デーモン設定の主要項目を取得する。", "estimated_runtime_seconds": 1 },
+      { "name": "claude-investigate-wordpress-core-version", "path": "documents/readonly/claude-investigate/wordpress/core-version", "category": "wordpress", "subcategory": "application", "safety": "readonly", "description": "WebRoot 配下の WordPress サイトのコアバージョンを取得する。", "estimated_runtime_seconds": 5 },
+      { "name": "claude-investigate-wordpress-multisite-check", "path": "documents/readonly/claude-investigate/wordpress/multisite-check", "category": "wordpress", "subcategory": "application", "safety": "readonly", "description": "WordPress マルチサイト構成かを wp-config.php から判定する。", "estimated_runtime_seconds": 2 },
+      { "name": "claude-investigate-wordpress-plugin-list", "path": "documents/readonly/claude-investigate/wordpress/plugin-list", "category": "wordpress", "subcategory": "application", "safety": "readonly", "description": "WordPress プラグインの一覧とバージョンを取得する。", "estimated_runtime_seconds": 10 }
     ],
     "aws_playbooks": [
-      {
-        "name": "athena-cloudfront-top-uri",
-        "path": "playbooks/readonly/athena/cloudfront-top-uri",
-        "category": "athena",
-        "subcategory": "cloudfront",
-        "safety": "readonly",
-        "description": "CloudFront アクセスログから期間内のリクエスト数 Top URI を集計する。異常なアクセス集中の調査に利用。",
-        "required_permissions": [
-          "athena:StartQueryExecution",
-          "athena:GetQueryExecution",
-          "athena:GetQueryResults",
-          "athena:StopQueryExecution",
-          "glue:GetTable",
-          "glue:GetDatabase",
-          "glue:GetPartitions",
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:ListBucket"
-        ],
-        "parameters": [
-          {
-            "name": "distribution_id",
-            "type": "string",
-            "required": true
-          },
-          {
-            "name": "time_from",
-            "type": "timestamp",
-            "required": true
-          },
-          {
-            "name": "time_to",
-            "type": "timestamp",
-            "required": true
-          },
-          {
-            "name": "top_n",
-            "type": "integer",
-            "default": 50
-          }
-        ],
-        "estimated_runtime_seconds": 30,
-        "estimated_cost_usd": 0.01
-      }
+      { "name": "athena-cloudfront-top-uri", "path": "playbooks/readonly/athena/cloudfront-top-uri", "category": "athena", "subcategory": "cloudfront", "safety": "readonly", "description": "CloudFront アクセスログから期間内のリクエスト数 Top URI を集計する。", "estimated_runtime_seconds": 30, "estimated_cost_usd": 0.01 },
+      { "name": "cloudwatch-alb-5xx-rate", "path": "playbooks/readonly/cloudwatch/alb-5xx-rate", "category": "cloudwatch", "subcategory": "elb", "safety": "readonly", "description": "ALB の 5xx エラー率とリクエスト数を時系列で取得する。", "estimated_runtime_seconds": 10, "estimated_cost_usd": 0 },
+      { "name": "cloudwatch-ec2-cpu-stats", "path": "playbooks/readonly/cloudwatch/ec2-cpu-stats", "category": "cloudwatch", "subcategory": "ec2", "safety": "readonly", "description": "EC2 インスタンスの CPUUtilization メトリクスを時系列で取得する。", "estimated_runtime_seconds": 5, "estimated_cost_usd": 0 },
+      { "name": "ec2-describe-by-tag", "path": "playbooks/readonly/ec2/describe-by-tag", "category": "ec2", "subcategory": "discovery", "safety": "readonly", "description": "指定タグキー・値で EC2 インスタンスを検索し、構成情報と SSM Online 状態を取得する。", "estimated_runtime_seconds": 30, "estimated_cost_usd": 0 }
     ]
   }
 }

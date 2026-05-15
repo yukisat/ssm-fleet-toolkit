@@ -1,0 +1,48 @@
+schemaVersion: "2.2"
+description: |
+  MySQL / MariaDB スロークエリログを取得する readonly Document。
+  設定状況も合わせて確認する。
+parameters:
+  Lines:
+    type: String
+    default: "100"
+  ConfigFile:
+    type: String
+    default: ""
+    description: my.cnf パス。空なら /root/.my.cnf を試す
+mainSteps:
+  - action: aws:runShellScript
+    name: tailMysqlSlowLog
+    inputs:
+      timeoutSeconds: "20"
+      runCommand:
+        - |
+          set -eu
+          CONFIG="{{ ConfigFile }}"
+          if [ -z "$CONFIG" ]; then CONFIG="/root/.my.cnf"; fi
+          OPT=""
+          if [ -f "$CONFIG" ]; then OPT="--defaults-file=$CONFIG"; fi
+
+          echo "=== スロークエリ設定確認 ==="
+          mysql $OPT -N -e "SHOW VARIABLES LIKE 'slow%';" 2>/dev/null || {
+            echo "MySQL に接続できません（認証情報が必要）" >&2
+            exit 1
+          }
+          echo
+
+          SLOW_LOG=$(mysql $OPT -N -e "SHOW VARIABLES LIKE 'slow_query_log';" 2>/dev/null | awk '{print $2}')
+          if [ "$SLOW_LOG" != "ON" ]; then
+            echo "スロークエリログが無効です (slow_query_log = $SLOW_LOG)"
+            echo "有効化: SET GLOBAL slow_query_log = ON; SET GLOBAL long_query_time = 1;"
+            exit 0
+          fi
+
+          LOG_FILE=$(mysql $OPT -N -e "SHOW VARIABLES LIKE 'slow_query_log_file';" 2>/dev/null | awk '{print $2}')
+          [ -z "$LOG_FILE" ] && LOG_FILE="/var/log/mysql/mysql-slow.log"
+
+          echo "=== スロークエリログ: $LOG_FILE ==="
+          if [ ! -f "$LOG_FILE" ]; then
+            echo "ログファイルが見つかりません: $LOG_FILE"
+            exit 0
+          fi
+          tail -n {{ Lines }} "$LOG_FILE"

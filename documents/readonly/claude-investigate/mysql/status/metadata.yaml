@@ -1,0 +1,29 @@
+name: claude-investigate-mysql-status
+category: mysql
+subcategory: middleware
+safety: readonly
+description: |
+  MySQL / MariaDB のステータス変数を取得する。
+  認証情報は /root/.my.cnf 等を利用（明示的なパスワードは受け取らない）。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [mysql]
+parameters:
+  - name: ConfigFile
+    type: string
+    default: ""
+    description: my.cnf パス。空なら /root/.my.cnf
+output_schema:
+  type: object
+  properties:
+    threads_running: { type: integer }
+    threads_connected: { type: integer }
+    slow_queries: { type: integer }
+    queries: { type: integer }
+    uptime_seconds: { type: integer }
+    max_connections: { type: integer }
+estimated_runtime_seconds: 2
+claude_hints: |
+  - threads_connected が max_connections に近い → 接続枯渇リスク
+  - threads_running が常時 10+ → 重いクエリ、スロークエリ調査推奨
+  - slow_queries が増加トレンド → クエリチューニング検討
+  - 認証エラーの場合は /root/.my.cnf の設定確認、または RDS なら別経路で取得

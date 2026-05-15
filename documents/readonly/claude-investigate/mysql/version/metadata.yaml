@@ -1,0 +1,21 @@
+name: claude-investigate-mysql-version
+category: mysql
+subcategory: middleware
+safety: readonly
+description: MySQL / MariaDB のバージョン・ビルド情報を取得する（認証不要）。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [mysql]
+parameters:
+  - name: MysqlBinary
+    type: string
+    default: ""
+output_schema:
+  type: object
+  properties:
+    binary: { type: string }
+    raw: { type: string }
+estimated_runtime_seconds: 1
+claude_hints: |
+  - MariaDB 系か MySQL 系かは raw 文字列で判別
+  - 古いバージョンは CVE 確認（特に 5.x 系）
+  - RDS の場合は describe-db-instances の方が確実

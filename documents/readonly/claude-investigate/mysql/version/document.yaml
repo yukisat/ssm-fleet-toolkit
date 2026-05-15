@@ -1,0 +1,26 @@
+schemaVersion: "2.2"
+description: |
+  MySQL / MariaDB のバージョン・ビルド情報を取得する readonly Document。
+  mysql --version で取得（認証不要）。
+parameters:
+  MysqlBinary:
+    type: String
+    description: mysql バイナリパス。空なら mysql コマンド
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: collectMysqlVersion
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          BIN="{{ MysqlBinary }}"
+          if [ -z "$BIN" ]; then BIN="mysql"; fi
+          if ! command -v "$BIN" >/dev/null 2>&1; then
+            echo '{"error":"mysql command not found"}' >&2
+            exit 1
+          fi
+          RAW=$("$BIN" --version 2>&1)
+          # 例: mysql  Ver 15.1 Distrib 10.6.16-MariaDB, for Linux (x86_64) using readline 5.1
+          printf '{"binary":"%s","raw":"%s"}\n' "$BIN" "$(echo "$RAW" | sed 's/"/\\"/g')"

@@ -1,0 +1,29 @@
+name: claude-investigate-wordpress-multisite-check
+category: wordpress
+subcategory: application
+safety: readonly
+description: WordPress マルチサイト構成か（subdomain/subdirectory）を wp-config.php から判定する。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [python3]
+parameters:
+  - name: WebRoot
+    type: string
+    default: /var/www
+  - name: SiteDir
+    type: string
+    default: ""
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      site: { type: string }
+      is_multisite: { type: boolean }
+      subdomain_install: { type: boolean }
+      domain_current_site: { type: string }
+      path_current_site: { type: string }
+estimated_runtime_seconds: 2
+claude_hints: |
+  - is_multisite=true なら設定変更・移行時にネットワーク全体への影響を考慮
+  - subdomain_install=true は wildcard DNS 必須
+  - 移行・ドメイン変更時は DOMAIN_CURRENT_SITE の更新が必要

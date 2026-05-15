@@ -1,0 +1,31 @@
+schemaVersion: "2.2"
+description: |
+  Apache HTTP Server のバージョン・ビルド情報・有効モジュールを取得する readonly Document。
+parameters:
+  ApacheBinary:
+    type: String
+    description: Apache バイナリパス（httpd / apache2 / apachectl）。空なら自動探索
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: collectApacheVersion
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          BIN="{{ ApacheBinary }}"
+          if [ -z "$BIN" ]; then
+            for candidate in apachectl httpd apache2; do
+              if command -v "$candidate" >/dev/null 2>&1; then BIN="$candidate"; break; fi
+            done
+          fi
+          if [ -z "$BIN" ]; then
+            echo '{"error":"Apache binary not found"}' >&2
+            exit 1
+          fi
+          VERSION_RAW=$("$BIN" -v 2>&1 || true)
+          MODULES=$("$BIN" -M 2>&1 | grep -E '_module' | awk '{print $1}' | python3 -c 'import sys,json; print(json.dumps([l.strip() for l in sys.stdin]))')
+          MPM=$("$BIN" -V 2>&1 | grep -i 'Server MPM' | sed 's/.*: //' | head -1)
+          printf '{"binary":"%s","version_raw":"%s","mpm":"%s","modules":%s}\n' \
+            "$BIN" "$(echo "$VERSION_RAW" | head -1 | sed 's/"/\\"/g')" "$MPM" "$MODULES"

@@ -1,0 +1,23 @@
+name: claude-investigate-mysql-slow-log
+category: mysql
+subcategory: middleware
+safety: readonly
+description: MySQL / MariaDB のスロークエリログを取得する（設定状況確認も同時に実施）。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [mysql, tail, awk]
+parameters:
+  - name: Lines
+    type: string
+    default: "100"
+  - name: ConfigFile
+    type: string
+    default: ""
+output_schema:
+  type: string
+  description: スロークエリログのテキスト（設定情報含む）
+estimated_runtime_seconds: 2
+claude_hints: |
+  - Query_time, Lock_time, Rows_examined を確認
+  - 同じクエリが頻出 → クエリチューニング or インデックス追加候補
+  - Rows_examined が膨大 → フルテーブルスキャン疑い
+  - スローログ未有効の場合は SET GLOBAL で有効化を提案（ただし stateful なのでこのツールでは実行しない）

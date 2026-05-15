@@ -1,0 +1,23 @@
+name: claude-investigate-apache-version
+category: apache
+subcategory: middleware
+safety: readonly
+description: Apache HTTP Server のバージョン・MPM・有効モジュールを JSON で取得する。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [python3]
+parameters:
+  - name: ApacheBinary
+    type: string
+    default: ""
+output_schema:
+  type: object
+  properties:
+    binary: { type: string }
+    version_raw: { type: string }
+    mpm: { type: string }
+    modules: { type: array, items: { type: string } }
+estimated_runtime_seconds: 1
+claude_hints: |
+  - MPM が prefork ならプロセス並列度に注意、event/worker はスレッド化
+  - mod_security / mod_evasive 等のセキュリティモジュールの有無確認
+  - 古い 2.2 系は EOL、2.4 系が現行

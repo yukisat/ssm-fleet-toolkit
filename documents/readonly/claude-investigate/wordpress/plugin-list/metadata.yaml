@@ -1,0 +1,37 @@
+name: claude-investigate-wordpress-plugin-list
+category: wordpress
+subcategory: application
+safety: readonly
+description: |
+  WordPress プラグインの一覧とバージョンを取得する。
+  WP-CLI 利用可能ならそれを使い、なければプラグインヘッダから直接抽出。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [python3]
+optional_commands: [wp]
+parameters:
+  - name: WebRoot
+    type: string
+    default: /var/www
+  - name: SiteDir
+    type: string
+    default: ""
+    description: 単一サイト指定（空なら WebRoot 配下を探索）
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      site: { type: string }
+      plugins:
+        type: array
+        items:
+          type: object
+          properties:
+            name: { type: string }
+            slug: { type: string }
+            version: { type: string }
+estimated_runtime_seconds: 10
+claude_hints: |
+  - 一覧から脆弱性のあるプラグイン（公開 CVE）を照合
+  - 同じプラグインが複数サイトで古いバージョン → 一斉更新候補
+  - WP-CLI ない環境ではプラグインヘッダ抽出なので status (active/inactive) は取得不可

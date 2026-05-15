@@ -1,0 +1,22 @@
+name: claude-investigate-security-ssh-config
+category: security
+subcategory: ssh
+safety: readonly
+description: |
+  SSH デーモン設定の主要項目を取得する。設定値のみ確認、秘密鍵やパスワードは取得しない。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [python3]
+parameters:
+  - name: ConfigFile
+    type: string
+    default: /etc/ssh/sshd_config
+output_schema:
+  type: object
+  description: 主要 sshd_config 値（null は未設定 = sshd デフォルト）
+estimated_runtime_seconds: 1
+claude_hints: |
+  - PermitRootLogin が yes/prohibit-password 以外なら要見直し（推奨は no）
+  - PasswordAuthentication=yes はパスワード総当たり攻撃のリスク
+  - PermitEmptyPasswords=yes は重大、即修正
+  - MaxAuthTries が大きい値は brute force 対策が弱い
+  - Port 22 のデフォルトは攻撃対象になりやすい（運用ポリシーによる）

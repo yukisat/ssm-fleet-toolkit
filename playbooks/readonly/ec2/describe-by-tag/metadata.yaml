@@ -1,0 +1,42 @@
+name: ec2-describe-by-tag
+category: ec2
+subcategory: discovery
+safety: readonly
+description: |
+  指定タグキー・値で EC2 インスタンスを検索し、構成情報を JSON で取得する。
+  全リージョン横断・特定リージョンのいずれも対応。
+required_permissions:
+  - ec2:DescribeInstances
+  - ec2:DescribeRegions
+  - ssm:DescribeInstanceInformation  # SSM Online ステータス
+parameters:
+  - name: tag_key
+    type: string
+    required: true
+    description: 検索するタグキー（例 Project）
+  - name: tag_value
+    type: string
+    required: true
+    description: タグ値（ワイルドカード * 可）
+  - name: region
+    type: string
+    default: ""
+    description: 空なら全リージョン横断、指定すれば特定リージョン
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      instance_id: { type: string }
+      region: { type: string }
+      state: { type: string }
+      instance_type: { type: string }
+      private_ip: { type: string }
+      tags: { type: object }
+      ssm_online: { type: boolean }
+estimated_runtime_seconds: 30  # 全リージョン横断時
+estimated_cost_usd: 0.00
+claude_hints: |
+  - state=running 以外は調査対象外として除外可能
+  - ssm_online=false は SSM Document 実行不可、原因（IAM 不足 / agent 未起動）調査必要
+  - 全リージョン横断は時間がかかるので、対象リージョンが分かれば指定する
