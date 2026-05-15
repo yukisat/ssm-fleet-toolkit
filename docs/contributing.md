@@ -151,6 +151,42 @@ shellcheck documents/**/*.yaml  # YAML 内の bash も対象に
 ./scripts/build-catalog.sh --check
 ```
 
+## シェル互換性ガイドライン
+
+`bootstrap/` および `scripts/` 配下のローカル実行スクリプトは、利用者の対話シェル（bash / zsh）を問わず動作する必要がある:
+
+### Shebang
+
+- 必ず `#!/usr/bin/env bash` を指定する
+- これにより利用者のシェルに関わらず bash で実行される
+
+### bash 3.2（macOS デフォルト）互換性
+
+macOS は標準で bash 3.2 を提供する（古い）。以下は使用しない:
+
+- `mapfile` / `readarray`（4.0+）
+- 連想配列 `declare -A`（4.0+）
+- `${var,,}` / `${var^^}`（4.0+）
+- `&>>` リダイレクト（4.0+、`>> file 2>&1` で代替）
+
+### zsh から source する場合の配慮
+
+- 配列展開は必ず `"${array[@]}"` で（zsh の word splitting 差異対策）
+- グローブ展開に依存しない（`set -f` で抑制するか、明示的にループ）
+- `compgen` は bash 専用、使わない
+
+### POSIX 互換に寄せる
+
+可能な限り POSIX shell 互換の書き方を選ぶ。bash 専用機能を使う場合はコメントで明示。
+
+### SSM Document 内のシェルスクリプト
+
+- 実行環境は EC2 上の `sh -c`（bash 利用可）
+- マルチライン処理は `runCommand` 配列で 1 コマンド 1 要素にするか、heredoc を使う
+- `{{ Parameter }}` 展開と shell 変数展開を混同しない（パラメータは最初に変数代入）
+
+詳細: `docs/known-gotchas.md` 9-12 番
+
 ## レビュー観点
 
 PR レビューでは以下を確認:
