@@ -1,0 +1,27 @@
+name: claude-investigate-os-listening-ports
+category: os
+subcategory: linux-common
+safety: readonly
+description: LISTEN 状態の TCP ポートとリッスンプロセスを JSON で取得する。
+supported_os:
+  - amazon-linux-2
+  - amazon-linux-2023
+  - ubuntu-22.04
+  - rhel-9
+  - debian-12
+required_commands: [ss, awk]
+parameters: []
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      protocol: { type: string }
+      address: { type: string }
+      port: { type: integer }
+      process: { type: string }
+estimated_runtime_seconds: 1
+claude_hints: |
+  - 想定外の高ポート LISTEN は不正アクセス・バックドアを疑う
+  - 80/443 が nginx 以外ならアプリ直接公開、想定通りか確認
+  - 0.0.0.0 LISTEN は外部公開ポート、SG/iptables との整合性確認

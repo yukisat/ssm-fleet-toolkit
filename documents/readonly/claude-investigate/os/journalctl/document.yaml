@@ -1,0 +1,43 @@
+schemaVersion: "2.2"
+description: |
+  journalctl から指定ユニット・優先度・期間のログを取得する readonly 調査 Document。
+parameters:
+  Unit:
+    type: String
+    description: 対象 systemd ユニット名（例: nginx, php-fpm, mysqld）。空なら全体
+    default: ""
+  Priority:
+    type: String
+    description: 優先度フィルタ（emerg, alert, crit, err, warning, notice, info, debug）
+    default: warning
+  Since:
+    type: String
+    description: 開始時刻（例: '1 hour ago', '2026-05-15 00:00:00'）
+    default: "1 hour ago"
+  Lines:
+    type: String
+    description: 取得行数の上限
+    default: "200"
+mainSteps:
+  - action: aws:runShellScript
+    name: queryJournal
+    inputs:
+      timeoutSeconds: "30"
+      runCommand:
+        - |
+          set -eu
+          UNIT="{{ Unit }}"
+          PRIORITY="{{ Priority }}"
+          SINCE="{{ Since }}"
+          LINES="{{ Lines }}"
+
+          if ! command -v journalctl >/dev/null 2>&1; then
+            echo '{"error":"journalctl が利用できません（systemd 非採用環境）"}' >&2
+            exit 1
+          fi
+
+          cmd="journalctl --no-pager -n $LINES -p $PRIORITY --since \"$SINCE\""
+          if [ -n "$UNIT" ]; then
+            cmd="$cmd -u $UNIT"
+          fi
+          eval "$cmd"

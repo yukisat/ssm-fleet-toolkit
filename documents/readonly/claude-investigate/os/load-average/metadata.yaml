@@ -1,0 +1,39 @@
+name: claude-investigate-os-load-average
+category: os
+subcategory: linux-common
+safety: readonly
+description: |
+  ロードアベレージ（1/5/15 分）とコア数、コアあたり負荷を JSON で取得する。
+
+supported_os:
+  - amazon-linux-2
+  - amazon-linux-2023
+  - ubuntu-20.04
+  - ubuntu-22.04
+  - ubuntu-24.04
+  - rhel-9
+  - debian-12
+
+required_packages: []
+required_commands:
+  - nproc
+  - awk
+
+parameters: []
+
+output_schema:
+  type: object
+  properties:
+    load_1min: { type: number }
+    load_5min: { type: number }
+    load_15min: { type: number }
+    cores: { type: integer }
+    load_per_core_1min: { type: number }
+    load_per_core_5min: { type: number }
+
+estimated_runtime_seconds: 1
+
+claude_hints: |
+  - load_per_core が 1.0 を超えるとコア飽和、2.0 で深刻
+  - 1min > 15min なら負荷が増加トレンド、逆なら収束トレンド
+  - 急上昇時は process-list と組み合わせて原因プロセス特定

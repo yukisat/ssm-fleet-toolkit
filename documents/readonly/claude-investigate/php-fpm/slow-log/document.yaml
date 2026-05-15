@@ -1,0 +1,34 @@
+schemaVersion: "2.2"
+description: |
+  PHP-FPM スロークエリログを取得する readonly Document。
+parameters:
+  LogPath:
+    type: String
+    description: スロークエリログのパス。空なら自動探索
+    default: ""
+  Lines:
+    type: String
+    default: "200"
+mainSteps:
+  - action: aws:runShellScript
+    name: tailFpmSlowLog
+    inputs:
+      timeoutSeconds: "20"
+      runCommand:
+        - |
+          set -eu
+          LOG="{{ LogPath }}"
+          if [ -z "$LOG" ]; then
+            for candidate in /var/log/php-fpm/www.log.slow /var/log/php-fpm/slow.log /var/log/php/fpm-slow.log /var/log/php-fpm.slow.log; do
+              if [ -f "$candidate" ]; then LOG="$candidate"; break; fi
+            done
+          fi
+          if [ -z "$LOG" ] || [ ! -f "$LOG" ]; then
+            echo "PHP-FPM スロークエリログが見つかりません" >&2
+            echo "/var/log/php-fpm/ 配下:" >&2
+            ls /var/log/php-fpm/ 2>/dev/null >&2 || true
+            echo "pool-config Document で slowlog 設定確認を推奨" >&2
+            exit 1
+          fi
+          echo "=== $LOG ==="
+          tail -n {{ Lines }} "$LOG"

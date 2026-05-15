@@ -1,0 +1,24 @@
+name: claude-investigate-php-error-log
+category: php
+subcategory: middleware
+safety: readonly
+description: PHP エラーログを取得する。ログパス自動探索 + grep フィルタ対応。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [tail, grep]
+parameters:
+  - name: LogPath
+    type: string
+    default: ""
+  - name: Lines
+    type: string
+    default: "100"
+  - name: Filter
+    type: string
+    default: ""
+output_schema: { type: string }
+estimated_runtime_seconds: 1
+claude_hints: |
+  - Fatal error → 即停止系、修正必須
+  - Allowed memory size exhausted → memory_limit 調整 or リーク調査
+  - Maximum execution time → スロークエリ / 外部 API タイムアウト
+  - DEPRECATED 大量 → PHP バージョンアップ前のコード修正候補

@@ -1,0 +1,18 @@
+schemaVersion: "2.2"
+description: |
+  ロードアベレージと CPU コア数を JSON で取得する readonly 調査 Document。
+parameters: {}
+mainSteps:
+  - action: aws:runShellScript
+    name: collectLoadAverage
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          read -r load1 load5 load15 _ < /proc/loadavg
+          cores=$(nproc)
+          printf '{"load_1min":%.2f,"load_5min":%.2f,"load_15min":%.2f,"cores":%d,"load_per_core_1min":%.2f,"load_per_core_5min":%.2f}\n' \
+            "$load1" "$load5" "$load15" "$cores" \
+            "$(awk "BEGIN { print $load1 / $cores }")" \
+            "$(awk "BEGIN { print $load5 / $cores }")"

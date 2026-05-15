@@ -1,0 +1,28 @@
+name: claude-investigate-nginx-error-log
+category: nginx
+subcategory: middleware
+safety: readonly
+description: |
+  nginx エラーログを tail し、必要に応じてフィルタする。
+  ログパスはパラメータで指定可能（複数 vhost 環境にも対応）。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [tail, grep]
+parameters:
+  - name: LogPath
+    type: string
+    default: ""
+    description: 空なら /var/log/nginx/error.log
+  - name: Lines
+    type: string
+    default: "50"
+  - name: Filter
+    type: string
+    default: ""
+output_schema:
+  type: string
+estimated_runtime_seconds: 1
+claude_hints: |
+  - upstream timed out → バックエンド遅延
+  - connect() failed → upstream プロセス停止または接続拒否
+  - SSL_do_handshake failed → 証明書・SNI 問題
+  - 110: Connection timed out → ネットワーク・FW 問題

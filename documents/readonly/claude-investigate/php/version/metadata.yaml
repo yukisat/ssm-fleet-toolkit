@@ -1,0 +1,24 @@
+name: claude-investigate-php-version
+category: php
+subcategory: middleware
+safety: readonly
+description: PHP のバージョン・SAPI・主要モジュール一覧を JSON で取得する。
+supported_os: [amazon-linux-2, amazon-linux-2023, ubuntu-22.04, rhel-9, debian-12]
+required_commands: [php, python3]
+parameters:
+  - name: PhpBinary
+    type: string
+    default: ""
+output_schema:
+  type: object
+  properties:
+    binary: { type: string }
+    version: { type: string }
+    sapi: { type: string }
+    ini_file: { type: string }
+    modules: { type: array, items: { type: string } }
+estimated_runtime_seconds: 1
+claude_hints: |
+  - 古い PHP（7.x 以下）は EOL リスク要確認
+  - modules に opcache / mysqli / mbstring / curl / gd / zip があるか確認
+  - sapi=cli の場合、Web 側と別バイナリの可能性あり（CLI 用 ini と FPM 用 ini が異なる）

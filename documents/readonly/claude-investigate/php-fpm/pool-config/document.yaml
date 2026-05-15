@@ -1,0 +1,71 @@
+schemaVersion: "2.2"
+description: |
+  PHP-FPM のプール設定（pm 系パラメータ・user/group・listen）を JSON で取得する readonly Document。
+parameters:
+  ConfigDir:
+    type: String
+    description: PHP-FPM 設定ディレクトリ。空なら自動探索
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: collectFpmPool
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          CONFIG_DIR="{{ ConfigDir }}"
+          if [ -z "$CONFIG_DIR" ]; then
+            for candidate in /etc/php-fpm.d /etc/php/8.3/fpm/pool.d /etc/php/8.2/fpm/pool.d /etc/php/8.1/fpm/pool.d /etc/php/7.4/fpm/pool.d /etc/opt/remi/php*/php-fpm.d; do
+              if compgen -G "$candidate" >/dev/null; then CONFIG_DIR=$(ls -d $candidate 2>/dev/null | head -1); break; fi
+            done
+          fi
+          if [ -z "$CONFIG_DIR" ] || [ ! -d "$CONFIG_DIR" ]; then
+            echo '{"error":"php-fpm 設定ディレクトリが見つかりません"}' >&2
+            exit 1
+          fi
+          python3 - <<PYEOF
+          import json
+          import os
+
+          confdir = "$CONFIG_DIR"
+          pools = []
+          for fname in sorted(os.listdir(confdir)):
+              if not fname.endswith('.conf'):
+                  continue
+              path = os.path.join(confdir, fname)
+              try:
+                  with open(path) as f:
+                      lines = f.readlines()
+              except OSError:
+                  continue
+              entries = {}
+              pool_name = None
+              for raw in lines:
+                  line = raw.strip()
+                  if not line or line.startswith(';') or line.startswith('#'):
+                      continue
+                  if line.startswith('[') and line.endswith(']'):
+                      pool_name = line[1:-1]
+                      continue
+                  if '=' in line:
+                      key, _, val = line.partition('=')
+                      entries[key.strip()] = val.strip()
+              pools.append({
+                  "file": fname,
+                  "pool": pool_name,
+                  "user": entries.get("user"),
+                  "group": entries.get("group"),
+                  "listen": entries.get("listen"),
+                  "pm": entries.get("pm"),
+                  "pm.max_children": entries.get("pm.max_children"),
+                  "pm.start_servers": entries.get("pm.start_servers"),
+                  "pm.min_spare_servers": entries.get("pm.min_spare_servers"),
+                  "pm.max_spare_servers": entries.get("pm.max_spare_servers"),
+                  "pm.max_requests": entries.get("pm.max_requests"),
+                  "request_terminate_timeout": entries.get("request_terminate_timeout"),
+                  "slowlog": entries.get("slowlog"),
+                  "request_slowlog_timeout": entries.get("request_slowlog_timeout"),
+              })
+          print(json.dumps(pools, ensure_ascii=False))
+          PYEOF

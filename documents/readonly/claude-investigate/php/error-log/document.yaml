@@ -1,0 +1,41 @@
+schemaVersion: "2.2"
+description: |
+  PHP エラーログを取得する readonly Document。
+  ログパスを自動探索し、tail / grep で絞り込み可能。
+parameters:
+  LogPath:
+    type: String
+    description: ログパス。空なら php-fpm の error_log を自動探索
+    default: ""
+  Lines:
+    type: String
+    default: "100"
+  Filter:
+    type: String
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: tailPhpError
+    inputs:
+      timeoutSeconds: "20"
+      runCommand:
+        - |
+          set -eu
+          LOG="{{ LogPath }}"
+          if [ -z "$LOG" ]; then
+            for candidate in /var/log/php-fpm/error.log /var/log/php/error.log /var/log/php_errors.log /var/log/php-fpm.log; do
+              if [ -f "$candidate" ]; then LOG="$candidate"; break; fi
+            done
+          fi
+          if [ -z "$LOG" ] || [ ! -f "$LOG" ]; then
+            echo "PHP エラーログが見つかりません" >&2
+            echo "/var/log/ 配下:" >&2
+            ls /var/log/php* /var/log/php-fpm/ 2>/dev/null >&2 || true
+            exit 1
+          fi
+          echo "=== $LOG ==="
+          if [ -z '{{ Filter }}' ]; then
+            tail -n {{ Lines }} "$LOG"
+          else
+            tail -n {{ Lines }} "$LOG" | grep -- '{{ Filter }}' || echo "(該当行なし)"
+          fi

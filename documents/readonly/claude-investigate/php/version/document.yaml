@@ -1,0 +1,28 @@
+schemaVersion: "2.2"
+description: |
+  PHP のバージョン・主要モジュール一覧を JSON で取得する readonly Document。
+parameters:
+  PhpBinary:
+    type: String
+    description: PHP バイナリパス。空なら php コマンドを利用
+    default: ""
+mainSteps:
+  - action: aws:runShellScript
+    name: collectPhpVersion
+    inputs:
+      timeoutSeconds: "10"
+      runCommand:
+        - |
+          set -eu
+          BIN="{{ PhpBinary }}"
+          if [ -z "$BIN" ]; then BIN="php"; fi
+          if ! command -v "$BIN" >/dev/null 2>&1; then
+            echo "{\"error\":\"php binary not found: $BIN\"}" >&2
+            exit 1
+          fi
+          VERSION=$("$BIN" -r 'echo PHP_VERSION;' 2>/dev/null || echo "unknown")
+          SAPI=$("$BIN" -r 'echo PHP_SAPI;' 2>/dev/null || echo "unknown")
+          INI=$("$BIN" -r 'echo php_ini_loaded_file();' 2>/dev/null || echo "unknown")
+          MODULES=$("$BIN" -m 2>/dev/null | grep -v '^\[' | grep -v '^$' | sort -u | python3 -c 'import sys,json; print(json.dumps([l.strip() for l in sys.stdin]))')
+          printf '{"binary":"%s","version":"%s","sapi":"%s","ini_file":"%s","modules":%s}\n' \
+            "$BIN" "$VERSION" "$SAPI" "$INI" "$MODULES"
