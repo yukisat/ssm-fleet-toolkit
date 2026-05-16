@@ -26,7 +26,7 @@ AWS SSM Document と調査用 IAM 権限を汎用ライブラリとして配布�
 - `documents/`: SSM Document ライブラリ（OS 内部調査）
 - `playbooks/`: AWS API 調査の手順書（Athena・CloudWatch 等）
 - `modules/`: Terraform モジュール（Document 配布・SSO permission set・IAM StackSet）
-- `deployments/_templates/`: 利用者環境のひな形（環境タイプ別）
+- `deployments/_template/`: 利用者環境のひな形（SSO + Organizations 専用）
 - `bootstrap/`: 事前定義スクリプト群（IAM ポリシー JSON 同梱）
 - `.claude/skills/`: 運用スキル
 - `catalog.json`: 自動生成インデックス（生成済みなら信頼できる情報源）

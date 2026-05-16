@@ -5,6 +5,16 @@ Semantic Versioning 風: MAJOR.MINOR.PATCH（破壊的変更 / 機能追加 / �
 
 ## [Unreleased]
 
+### Scope (Breaking change: SSO + Organizations 一本化)
+
+- サポート環境を **AWS Organizations + AWS Identity Center (SSO)** 統合済み環境のみに絞り込み
+- 削除: `deployments/_templates/single-account/`、`deployments/_templates/multi-account-manual/`
+- 改名: `deployments/_templates/multi-account-org/` → `deployments/_template/`
+- `bootstrap/03-init-deployment.sh` から `--type` オプションを削除（テンプレートは 1 種類のみ）
+- `bootstrap/00-check-prerequisites.sh` で Organizations 未利用時は即終了
+- README / architecture / faq / what-this-does / coexistence / glossary / SKILL を SSO 前提に統一
+- 単一アカウント / 手動マルチが必要な場合はフォークでの対応を推奨と明記
+
 ### Security / Hardening (外部レビュー反映)
 
 - Document パラメータに `allowedPattern` を追加してインジェクション防御層を追加

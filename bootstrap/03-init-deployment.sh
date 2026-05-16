@@ -4,43 +4,42 @@
 # 副作用: ローカルファイル作成のみ。AWS には触らない
 #
 # Usage:
-#   ./03-init-deployment.sh --type <single-account|multi-account-org|multi-account-manual> --name <org-name>
+#   ./03-init-deployment.sh --name <org-name>
 
 set -euo pipefail
 
-TYPE=""
 NAME=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --type) TYPE="$2"; shift 2 ;;
     --name) NAME="$2"; shift 2 ;;
     *) echo "Unknown arg: $1"; exit 2 ;;
   esac
 done
 
-if [[ -z "$TYPE" || -z "$NAME" ]]; then
-  echo "Usage: $0 --type <single-account|multi-account-org|multi-account-manual> --name <org-name>"
+if [[ -z "$NAME" ]]; then
+  echo "Usage: $0 --name <org-name>"
   exit 1
 fi
 
-case "$TYPE" in
-  single-account|multi-account-org|multi-account-manual) ;;
-  *) echo "Invalid type: $TYPE"; exit 1 ;;
+# 命名バリデーション
+case "$NAME" in
+  *[!A-Za-z0-9._-]*) echo "name に不正な文字: $NAME" >&2; exit 1 ;;
+  _template) echo "name に _template は使えません" >&2; exit 1 ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="$REPO_ROOT/deployments/_templates/$TYPE"
+SRC="$REPO_ROOT/deployments/_template"
 DEST="$REPO_ROOT/deployments/$NAME"
 
 if [[ ! -d "$SRC" ]]; then
-  echo "テンプレートが見つかりません: $SRC"
+  echo "テンプレートが見つかりません: $SRC" >&2
   exit 1
 fi
 
 if [[ -d "$DEST" ]]; then
-  echo "既に存在します: $DEST"
-  echo "上書きしません。手動で削除またはマージしてください。"
+  echo "既に存在します: $DEST" >&2
+  echo "上書きしません。手動で削除またはマージしてください。" >&2
   exit 1
 fi
 
@@ -56,7 +55,7 @@ fi
 echo
 echo "次のステップ:"
 echo "  1. cd $DEST"
-echo "  2. terraform.tfvars を編集"
+echo "  2. terraform.tfvars を編集（aws_profile / investigator_group_id 等）"
 echo "  3. main.tf の backend ブロックをコメント解除して bucket/key を設定"
 echo "  4. terraform init"
 echo "  5. terraform plan  (0 to change, 0 to destroy を確認)"

@@ -14,7 +14,7 @@ ssm-fleet-toolkit/
 ├── documents/      OS 内部調査の SSM Document ライブラリ（汎用）
 ├── playbooks/      AWS API 調査の手順書（Athena・CloudWatch 等）
 ├── modules/        Terraform モジュール（Document 配布・権限・StackSet）
-├── deployments/    利用者環境ごとのひな形（_templates/ 配下）
+├── deployments/    利用者環境のひな形（_template/）
 ├── bootstrap/      事前定義スクリプトと IAM ポリシー JSON
 ├── .claude/skills/ 運用スキル（セットアップ・調査・追加）
 ├── catalog.json    Document / playbook の機械可読インデックス
@@ -31,15 +31,16 @@ ssm-fleet-toolkit/
 
 上 2 層を「ライブラリ」として汎用化、最下層は各組織のプライベートリポジトリで管理する。
 
-## 環境タイプ
+## 対象環境（限定）
 
-3 種類すべてに同じモジュールで対応:
+このリポジトリは以下の環境のみをサポートする:
 
-- 単一 AWS アカウント
-- AWS Organizations（推奨、SSO 統合可能）
-- 手動マルチアカウント（Organizations 未使用）
+- **AWS Organizations** 配下の複数アカウント運用
+- **AWS Identity Center (SSO)** 統合済み
+- 委任管理アカウントから子アカウントへ配布
 
-`modules/ssm-document` の `shared_account_ids` 変数が空配列なら共有なしで動作する、など、モジュール側で環境差を吸収。
+シンプルさを優先し、単一アカウント運用や Organizations 未利用環境はサポートしない。
+これらが必要な場合はフォークして別リポジトリで対応するのが推奨。
 
 ## Document の安全性設計
 

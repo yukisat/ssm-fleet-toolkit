@@ -18,7 +18,7 @@
 - **`ssm-fleet-*`**: 本ツールが Terraform で作成する IAM・S3・DynamoDB・CloudFormation リソースの命名プレフィックス
 - **インストーラ権限**: セットアップ時のみ必要な広い IAM 権限。完了後は削除可能
 - **オペレータ権限**: 日常運用で必要な最小 IAM 権限。恒久的に保持
-- **deployment**: 各組織が自分の AWS 環境にデプロイするために用意する Terraform 設定。`deployments/_templates/` から派生
+- **deployment**: 各組織が自分の AWS 環境にデプロイするために用意する Terraform 設定。`deployments/_template/` から派生
 - **catalog.json**: Document / playbook のメタデータ集約 JSON。`scripts/build-catalog.sh` で `metadata.yaml` から自動生成
 
 ## 設計概念

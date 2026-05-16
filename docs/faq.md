@@ -49,9 +49,7 @@ Claude Code を前提に設計しているが、Document・playbook 自体は AW
 
 ### Q. 導入にどれくらい時間がかかりますか？
 
-- 単一アカウント: 約 10 分
-- Organizations 統合: 約 15-20 分
-- 複数アカウント手動: 約 20-30 分
+約 15-20 分（SSO + Organizations 統合済み環境想定）。
 
 ### Q. 既に他の Terraform プロジェクトを使っています。共存できますか？
 
@@ -60,8 +58,14 @@ Claude Code を前提に設計しているが、Document・playbook 自体は AW
 
 ### Q. SSO を使っていません。導入できますか？
 
-はい。単一アカウントテンプレート（`deployments/_templates/single-account/`）は SSO 不要。
-複数アカウントの場合も `multi-account-manual` テンプレートで対応可能（ただし IAM 配布は手動）。
+このリポジトリは AWS Identity Center (SSO) + Organizations 統合済み環境専用です。
+SSO 未利用の場合は対象外なので、フォークして要件に合わせて改造することを推奨します。
+
+シンプルさを優先するため、複数の認証方式・環境タイプはサポートしていません。
+
+### Q. Organizations を使っていません。導入できますか？
+
+同上、対象外です。
 
 ### Q. Organizations を使っていますが、StackSets trusted access が無効です。
 
@@ -137,7 +141,7 @@ Claude Code を前提に設計しているが、Document・playbook 自体は AW
 
 ### Q. ライセンスは？
 
-OSS 公開時に決定。MIT or Apache 2.0 を想定。
+MIT License。`LICENSE` ファイル参照。
 
 ### Q. 外部から PR を出したい
 
