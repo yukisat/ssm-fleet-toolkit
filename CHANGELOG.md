@@ -9,8 +9,8 @@ Semantic Versioning 風: MAJOR.MINOR.PATCH（破壊的変更 / 機能追加 / �
 
 - Document 追加: nginx-config の構文チェック、mysql databases 一覧、wordpress エラーログ
 - playbook 追加: CloudFront error-rate, S3 storage-by-bucket, RDS connection-count
-- GitHub Template Repository 有効化（HEP 展開タイミング）
-- Amimoto 実環境での実証
+- GitHub Template Repository 有効化（限定共有フェーズへの移行タイミング）
+- 実環境での実証
 - `bootstrap/02-create-tf-backend.sh` の dry-run 詳細化
 
 ## [0.3.0] - 2026-05-16

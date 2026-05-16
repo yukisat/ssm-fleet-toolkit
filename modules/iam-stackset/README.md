@@ -18,7 +18,7 @@ data "aws_organizations_organization" "this" {}
 module "investigate_role_stackset" {
   source = "../../modules/iam-stackset"
 
-  delegated_admin_account_id    = "022646323280"
+  delegated_admin_account_id    = "111111111111"
   deploy_to_entire_organization = true
   organizational_unit_ids       = [data.aws_organizations_organization.this.roots[0].id]
   region                        = "ap-northeast-1"
@@ -31,7 +31,7 @@ module "investigate_role_stackset" {
 module "investigate_role_stackset" {
   source = "../../modules/iam-stackset"
 
-  delegated_admin_account_id = "022646323280"
+  delegated_admin_account_id = "111111111111"
   target_account_ids         = ["111111111111", "222222222222"]
   region                     = "ap-northeast-1"
 }
