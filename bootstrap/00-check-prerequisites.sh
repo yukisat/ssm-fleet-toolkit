@@ -54,7 +54,8 @@ if org=$(aws organizations describe-organization --profile "$PROFILE" --output j
     warn "FeatureSet: $feature_set（StackSets 利用には ALL が必要）"
   fi
 else
-  warn "Organizations 未利用、または権限不足。単一アカウント運用ならスキップ可"
+  ng "Organizations が未利用または権限不足。本ツールは Organizations + SSO 統合環境専用です"
+  exit 1
 fi
 
 echo "== StackSets trusted access =="

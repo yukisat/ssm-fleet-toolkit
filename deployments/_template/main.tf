@@ -10,7 +10,7 @@ terraform {
   # 専用 state backend を委任管理アカウントに用意
   # backend "s3" {
   #   bucket         = "<delegated-admin-account>-ssm-fleet-tf-state"
-  #   key            = "ssm-fleet/multi-account-org/terraform.tfstate"
+  #   key            = "ssm-fleet/<your-org>/terraform.tfstate"
   #   region         = "ap-northeast-1"
   #   dynamodb_table = "ssm-fleet-tf-lock"
   #   encrypt        = true
@@ -34,7 +34,7 @@ locals {
 
 # SSO Permission Set（オペレータ用）
 module "permission_set" {
-  source = "../../../modules/sso-permission-set"
+  source = "../../modules/sso-permission-set"
 
   permission_set_name = var.permission_set_name
   include_ssm         = var.enable_ssm_investigation
@@ -49,10 +49,10 @@ module "permission_set" {
 
 # SSM Document の登録 + Organizations 全アカウント共有
 module "doc_disk_usage" {
-  source = "../../../modules/ssm-document"
+  source = "../../modules/ssm-document"
 
   document_name      = "claude-investigate-os-disk-usage"
-  document_path      = "../../../documents/readonly/claude-investigate/os/disk-usage/document.yaml"
+  document_path      = "../../documents/readonly/claude-investigate/os/disk-usage/document.yaml"
   category           = "os"
   shared_account_ids = local.target_account_ids
 }

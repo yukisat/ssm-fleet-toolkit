@@ -1,6 +1,6 @@
-# Deployment Template: multi-account-org
+# Deployment Template
 
-AWS Organizations 配下の複数アカウントに Document を一括展開するテンプレート。SSO 統合前提。
+AWS Organizations 配下の複数アカウントに Document を一括展開する唯一のテンプレート。SSO 統合前提。
 
 ## 前提
 
@@ -14,7 +14,7 @@ AWS Organizations 配下の複数アカウントに Document を一括展開す�
 ## 使い方
 
 ```bash
-cp -r deployments/_templates/multi-account-org deployments/<your-org>
+cp -r deployments/_template deployments/<your-org>
 cd deployments/<your-org>
 cp terraform.tfvars.example terraform.tfvars
 # terraform.tfvars を編集

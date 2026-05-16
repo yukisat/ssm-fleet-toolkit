@@ -1,14 +1,23 @@
 # ssm-fleet-toolkit
 
-AWS SSM Document と Claude Code スキルを汎用ライブラリとして配布するテンプレートリポジトリ。
+AWS SSO + Organizations 統合環境向けに、AWS SSM Document と Claude Code スキルを汎用ライブラリとして配布するテンプレートリポジトリ。
 
 サーバー / AWS 環境の調査を Claude Code に任せて、運用負荷を下げることを目的とする。
+
+## 想定する環境
+
+- **AWS Organizations** 配下の複数アカウントを運用
+- **AWS Identity Center (SSO)** 統合済み
+- 委任管理アカウントから Document を集約配信
+
+単一アカウント運用や Organizations 未利用環境は対象外。これらが必要な場合はフォークして別リポジトリで対応してください。
 
 ## 何ができるか
 
 - OS 内部調査（ディスク・プロセス・nginx・PHP・MySQL など）を SSM Document 経由で実行
 - AWS 環境調査（Athena・CloudWatch・EC2 describe など）を統一インターフェースで実行
-- 単一アカウント / Organizations / 手動マルチアカウント のすべてに対応
+- Organizations 全アカウントへの Document 配布を Terraform で管理
+- SSO Permission Set による調査用権限の最小化配布
 - 既存 AWS 環境を一切壊さず後から追加可能
 
 ## 導入方法
@@ -35,16 +44,10 @@ AWS 管理権限を持つ導入担当者が安心して導入できるよう、�
 
 詳細: [docs/required-permissions.md](docs/required-permissions.md) / [docs/what-this-does-not-do.md](docs/what-this-does-not-do.md) / [docs/coexistence.md](docs/coexistence.md)
 
-## サポートする環境
-
-- 単一 AWS アカウント
-- AWS Organizations（推奨、SSO 統合可）
-- 複数 AWS アカウント（Organizations 未使用）
-
 ## 詳細
 
 - アーキテクチャ: [docs/architecture.md](docs/architecture.md)
-- 利用可能な Document 一覧: [catalog.json](catalog.json)（自動生成、未生成の場合は documents/ 配下を参照）
+- 利用可能な Document 一覧: [catalog.json](catalog.json)
 - 安全ポリシー: [docs/safety-policy.md](docs/safety-policy.md)
 - 既存環境との共存: [docs/coexistence.md](docs/coexistence.md)
 - ロールバック: [docs/rollback.md](docs/rollback.md)

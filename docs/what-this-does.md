@@ -55,26 +55,18 @@ SSM Document（OS 内部）と playbook（AWS 環境）を組み合わせた統�
 - リアルタイム監視（CloudWatch Alarms / Datadog 等）
 - セキュリティインシデント対応の自動修復（本ツールは調査のみ）
 
-## 利用形態
+## 利用形態（SSO + Organizations 専用）
 
-### 想定パターン A: 個人 / 小組織
+このリポジトリは以下のパターンのみをサポート:
 
-- 単一アカウント
-- Permission Set ではなく IAM ロールに直接アタッチ
-- `deployments/_templates/single-account/` を使う
-
-### 想定パターン B: AWS Organizations 利用組織
-
-- 複数アカウントを Organizations で管理
+- AWS Organizations 配下の複数アカウントを運用
+- AWS Identity Center (SSO) を統合済み
 - 委任管理アカウントから StackSet で IAM 配布
 - SSO Permission Set でグループ単位の権限管理
-- `deployments/_templates/multi-account-org/` を使う
 
-### 想定パターン C: 複数アカウントだが Organizations 未使用
+→ `deployments/_template/` を使ってデプロイする。
 
-- 個別のアカウントに対して手動配布
-- 一部機能（StackSet）は使えない
-- `deployments/_templates/multi-account-manual/` を使う
+単一アカウント運用や Organizations 未利用は対象外。これらが必要な場合はフォークして要件に合わせて改造することを推奨する。
 
 ## エコシステム
 

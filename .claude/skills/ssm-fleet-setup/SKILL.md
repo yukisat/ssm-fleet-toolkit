@@ -2,7 +2,7 @@
 name: ssm-fleet-setup
 description: |
   ssm-fleet-toolkit を AWS 環境に導入する対話型セットアップスキル。
-  単一アカウント / Organizations / 手動マルチアカウント の 3 環境タイプに対応し、
+  AWS Organizations + AWS Identity Center (SSO) 統合済み環境専用。
   Document・権限・StackSet の配布を Terraform 経由で行う。
 ---
 
@@ -36,13 +36,17 @@ plan mode で以下を提示し、利用者の承認を得る:
 
 利用者が ExitPlanMode で承認するまで実際の処理は開始しない。
 
-### Step 1: 環境タイプの判定
+### Step 1: 前提環境の確認
 
-AskUserQuestion で確認:
+このツールは AWS Organizations + AWS Identity Center (SSO) 統合済み環境のみをサポート。
+利用者環境が以下を満たすか確認する:
 
-- 単一 AWS アカウント
-- AWS Organizations（推奨）
-- 手動マルチアカウント（Organizations 未使用）
+- AWS Organizations が all-features モード
+- AWS Identity Center が有効化されている
+- StackSets trusted access が有効
+- 委任管理アカウントが決定済み
+
+いずれかを満たさない場合は対象外として中止し、フォークでの対応を提案する。
 
 ### Step 2: 前提条件チェック
 
@@ -73,8 +77,8 @@ S3 バケット + DynamoDB テーブルを委任管理アカウントに作成�
 
 ### Step 6: deployments/<org>/ の生成
 
-`./bootstrap/03-init-deployment.sh --type <type> --name <org>` で
-`deployments/_templates/<type>/` をコピーし変数を埋める。
+`./bootstrap/03-init-deployment.sh --name <org>` で
+`deployments/_template/` をコピーし変数を埋める。
 
 ### Step 7: Terraform 実行
 
