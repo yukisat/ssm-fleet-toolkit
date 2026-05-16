@@ -24,7 +24,7 @@ module "claude_investigator" {
   include_cloudwatch  = false
   attach_aws_readonly = true
 
-  target_account_ids = ["YOUR_ACCOUNT_ID"]
+  target_account_ids = ["111111111111"]
   principal_id       = data.aws_identitystore_group.investigators.group_id
   principal_type     = "GROUP"
 }

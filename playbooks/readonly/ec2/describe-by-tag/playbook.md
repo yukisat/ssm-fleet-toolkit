@@ -9,7 +9,7 @@
 | 名前 | 例 | 説明 |
 |---|---|---|
 | tag_key | `Project` | タグキー |
-| tag_value | `Amimoto-*` | 値（ワイルドカード可） |
+| tag_value | `myproject-*` | 値（ワイルドカード可） |
 | region | `ap-northeast-1` | 空なら全リージョン |
 
 ## 実行（単一リージョン）
