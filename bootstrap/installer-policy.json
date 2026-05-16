@@ -16,23 +16,42 @@
       "Sid": "SSOAdminManagePermissionSets",
       "Effect": "Allow",
       "Action": [
-        "sso:*",
-        "sso-directory:*",
-        "identitystore:*",
+        "sso:ListInstances",
         "sso:CreatePermissionSet",
         "sso:DescribePermissionSet",
-        "sso:DeletePermissionSet",
+        "sso:DescribePermissionSetProvisioningStatus",
         "sso:UpdatePermissionSet",
+        "sso:DeletePermissionSet",
         "sso:ListPermissionSets",
+        "sso:ListPermissionSetsProvisionedToAccount",
+        "sso:ProvisionPermissionSet",
         "sso:AttachManagedPolicyToPermissionSet",
         "sso:DetachManagedPolicyFromPermissionSet",
+        "sso:ListManagedPoliciesInPermissionSet",
         "sso:PutInlinePolicyToPermissionSet",
         "sso:GetInlinePolicyForPermissionSet",
         "sso:DeleteInlinePolicyFromPermissionSet",
-        "sso:ListInstances",
         "sso:CreateAccountAssignment",
         "sso:DeleteAccountAssignment",
-        "sso:ListAccountAssignments"
+        "sso:ListAccountAssignments",
+        "sso:DescribeAccountAssignmentCreationStatus",
+        "sso:DescribeAccountAssignmentDeletionStatus",
+        "sso:TagResource",
+        "sso:UntagResource",
+        "sso:ListTagsForResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IdentityStoreReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "identitystore:ListGroups",
+        "identitystore:DescribeGroup",
+        "identitystore:GetGroupId",
+        "identitystore:ListUsers",
+        "identitystore:DescribeUser",
+        "identitystore:GetUserId"
       ],
       "Resource": "*"
     },

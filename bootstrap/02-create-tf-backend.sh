@@ -36,14 +36,24 @@ echo "S3 バケット: $BUCKET"
 echo "DynamoDB テーブル: $TABLE"
 echo
 
+# 入力値のバリデーション（インジェクション対策）
+case "$PROFILE" in
+  *[!A-Za-z0-9._-]*) echo "PROFILE に不正な文字: $PROFILE" >&2; exit 1 ;;
+esac
+case "$REGION" in
+  *[!a-z0-9-]*) echo "REGION に不正な文字: $REGION" >&2; exit 1 ;;
+esac
+case "$BUCKET" in
+  *[!a-z0-9.-]*) echo "BUCKET に不正な文字: $BUCKET" >&2; exit 1 ;;
+esac
+
+# run: 配列として受け取り直接実行（eval は使わない）
 run() {
   if [[ "$DRY_RUN" -eq 1 ]]; then
     echo "[DRY-RUN] $*"
   else
     echo "[EXEC] $*"
-    # shellcheck disable=SC2294
-    # 引数を 1 つの文字列として受け取り eval する（呼び出し側で長い CLI 文字列を渡しているため）
-    eval "$@"
+    "$@"
   fi
 }
 
@@ -53,19 +63,23 @@ if aws s3api head-bucket --bucket "$BUCKET" --profile "$PROFILE" 2>/dev/null; th
   echo "[SKIP] $BUCKET は既に存在します"
 else
   if [[ "$REGION" == "us-east-1" ]]; then
-    run "aws s3api create-bucket --bucket '$BUCKET' --profile '$PROFILE' --region '$REGION'"
+    run aws s3api create-bucket --bucket "$BUCKET" --profile "$PROFILE" --region "$REGION"
   else
-    run "aws s3api create-bucket --bucket '$BUCKET' --profile '$PROFILE' --region '$REGION' --create-bucket-configuration LocationConstraint='$REGION'"
+    run aws s3api create-bucket --bucket "$BUCKET" --profile "$PROFILE" --region "$REGION" \
+      --create-bucket-configuration LocationConstraint="$REGION"
   fi
 
   # バージョニング有効化
-  run "aws s3api put-bucket-versioning --bucket '$BUCKET' --profile '$PROFILE' --versioning-configuration Status=Enabled"
+  run aws s3api put-bucket-versioning --bucket "$BUCKET" --profile "$PROFILE" \
+    --versioning-configuration Status=Enabled
 
   # 暗号化有効化
-  run "aws s3api put-bucket-encryption --bucket '$BUCKET' --profile '$PROFILE' --server-side-encryption-configuration '{\"Rules\":[{\"ApplyServerSideEncryptionByDefault\":{\"SSEAlgorithm\":\"AES256\"}}]}'"
+  run aws s3api put-bucket-encryption --bucket "$BUCKET" --profile "$PROFILE" \
+    --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
 
   # パブリックアクセス完全ブロック
-  run "aws s3api put-public-access-block --bucket '$BUCKET' --profile '$PROFILE' --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+  run aws s3api put-public-access-block --bucket "$BUCKET" --profile "$PROFILE" \
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
   echo "[OK] バケット作成完了"
 fi
@@ -76,14 +90,14 @@ echo "== DynamoDB テーブル =="
 if aws dynamodb describe-table --table-name "$TABLE" --profile "$PROFILE" --region "$REGION" >/dev/null 2>&1; then
   echo "[SKIP] $TABLE は既に存在します"
 else
-  run "aws dynamodb create-table \
-    --table-name '$TABLE' \
-    --profile '$PROFILE' \
-    --region '$REGION' \
+  run aws dynamodb create-table \
+    --table-name "$TABLE" \
+    --profile "$PROFILE" \
+    --region "$REGION" \
     --attribute-definitions AttributeName=LockID,AttributeType=S \
     --key-schema AttributeName=LockID,KeyType=HASH \
     --billing-mode PAY_PER_REQUEST \
-    --tags Key=ssm-fleet:managed-by,Value=ssm-fleet-toolkit"
+    --tags Key=ssm-fleet:managed-by,Value=ssm-fleet-toolkit
 
   if [[ "$DRY_RUN" -eq 0 ]]; then
     echo "テーブル ACTIVE 待機中..."

@@ -6,18 +6,30 @@ parameters:
     type: String
     description: "対象 systemd ユニット名（例: nginx, php-fpm, mysqld）。空なら全体"
     default: ""
+    allowedPattern: "^[A-Za-z0-9._\\-@]*$"
   Priority:
     type: String
     description: 優先度フィルタ（emerg, alert, crit, err, warning, notice, info, debug）
     default: warning
+    allowedValues:
+      - emerg
+      - alert
+      - crit
+      - err
+      - warning
+      - notice
+      - info
+      - debug
   Since:
     type: String
     description: "開始時刻（例 '1 hour ago' / '2026-05-15 00:00:00'）"
     default: "1 hour ago"
+    allowedPattern: "^[A-Za-z0-9 :\\-]+$"
   Lines:
     type: String
     description: 取得行数の上限
     default: "200"
+    allowedPattern: "^[0-9]+$"
 mainSteps:
   - action: aws:runShellScript
     name: queryJournal
