@@ -39,7 +39,7 @@ AWS SSM Document と調査用 IAM 権限を汎用ライブラリとして配布�
 - やらないこと: `docs/what-this-does-not-do.md`
 - 既存環境との共存: `docs/coexistence.md`
 - ロールバック: `docs/rollback.md`
-- Document 追加方法: `docs/contributing.md`（未作成）
+- Document 追加方法: `docs/contributing.md`
 
 ## 各サブディレクトリの追加ガイド
 

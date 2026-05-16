@@ -5,6 +5,27 @@ Semantic Versioning 風: MAJOR.MINOR.PATCH（破壊的変更 / 機能追加 / �
 
 ## [Unreleased]
 
+### Security / Hardening (外部レビュー反映)
+
+- Document パラメータに `allowedPattern` を追加してインジェクション防御層を追加
+  - 対象: mysql/slow-log, nginx/access-log, nginx/error-log, nginx/cve-pattern-scan,
+    os/journalctl, os/process-list, os/system-messages, php-fpm/slow-log, php/error-log
+- `bootstrap/installer-policy.json` の SSO ワイルドカード権限を最小化
+  - `sso:*` / `sso-directory:*` / `identitystore:*` を削除
+  - 実際に必要な 23 個の sso アクション + 6 個の identitystore 読み取り専用に絞る
+- `bootstrap/02-create-tf-backend.sh` の `eval "$@"` を廃止、配列引数の直接実行に変更
+  - PROFILE / REGION / BUCKET の入力値バリデーションを追加（インジェクション対策）
+
+### Fixed
+
+- README.md のライセンス欄を MIT に修正
+- CLAUDE.md の docs/contributing.md「未作成」記述を削除
+- ssm-fleet-setup/SKILL.md の bootstrap スクリプト参照を実在のものに修正
+
+### Docs
+
+- docs/required-permissions.md に SSO 権限の影響範囲と緩和策の警告セクション追加
+
 ### Planned
 
 - Document 追加: nginx-config の構文チェック、mysql databases 一覧、wordpress エラーログ

@@ -11,14 +11,17 @@ parameters:
     type: String
     description: ステータスコードフィルタ（例 404, 500, 50 で 5xx）。空ならフィルタなし
     default: ""
+    allowedPattern: "^[0-9]{0,3}$"
   UrlPattern:
     type: String
     description: URL パターン（grep 文字列）。空ならフィルタなし
     default: ""
+    allowedPattern: "^[A-Za-z0-9._/=&%?+,:;@~\\-]*$"
   Lines:
     type: String
     description: 取得行数
     default: "100"
+    allowedPattern: "^[0-9]+$"
 mainSteps:
   - action: aws:runShellScript
     name: tailNginxAccess

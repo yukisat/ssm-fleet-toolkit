@@ -6,6 +6,7 @@ parameters:
   Lines:
     type: String
     default: "100"
+    allowedPattern: "^[0-9]+$"
   ConfigFile:
     type: String
     default: ""

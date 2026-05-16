@@ -11,10 +11,12 @@ parameters:
     type: String
     description: 取得行数
     default: "50"
+    allowedPattern: "^[0-9]+$"
   Filter:
     type: String
     description: grep フィルタキーワード。空ならフィルタなし
     default: ""
+    allowedPattern: "^[A-Za-z0-9._/=&%?+,:;@~ \\-]*$"
 mainSteps:
   - action: aws:runShellScript
     name: tailNginxError

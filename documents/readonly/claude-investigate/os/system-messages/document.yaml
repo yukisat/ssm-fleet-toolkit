@@ -6,14 +6,17 @@ parameters:
     type: String
     description: 取得行数
     default: "100"
+    allowedPattern: "^[0-9]+$"
   Filter:
     type: String
     description: grep フィルタキーワード。空ならフィルタなし
     default: ""
+    allowedPattern: "^[A-Za-z0-9._/=&%?+,:;@~ \\-]*$"
   LogPath:
     type: String
     description: ログファイルパス。空なら自動検出
     default: ""
+    allowedPattern: "^(/[A-Za-z0-9._\\-]+)*$"
 mainSteps:
   - action: aws:runShellScript
     name: tailMessages

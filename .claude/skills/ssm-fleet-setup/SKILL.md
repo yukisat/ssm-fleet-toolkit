@@ -69,11 +69,11 @@ SSO で利用可能なアカウント一覧から利用者に選ばせる。
 ### Step 5: Terraform backend の準備
 
 S3 バケット + DynamoDB テーブルを委任管理アカウントに作成。
-利用者の承認後、`02-create-tf-backend.sh`（未作成）を実行。
+利用者の承認後、`./bootstrap/02-create-tf-backend.sh` を実行。
 
 ### Step 6: deployments/<org>/ の生成
 
-`./bootstrap/03-init-deployment.sh`（未作成）で
+`./bootstrap/03-init-deployment.sh --type <type> --name <org>` で
 `deployments/_templates/<type>/` をコピーし変数を埋める。
 
 ### Step 7: Terraform 実行

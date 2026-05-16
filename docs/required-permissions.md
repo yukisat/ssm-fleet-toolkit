@@ -22,7 +22,8 @@
 | Sid | アクション | 用途 | リソース |
 |---|---|---|---|
 | OrganizationsReadAndEnableTrustedAccess | DescribeOrganization, ListAccounts, EnableAWSServiceAccess 等 | StackSets trusted access 有効化、共有先取得 | `*` |
-| SSOAdminManagePermissionSets | sso, identitystore, sso-directory の管理系 | Permission Set 作成・割り当て | `*` |
+| SSOAdminManagePermissionSets | sso:* の個別アクション 23 個（書き込みあり） | Permission Set 作成・割り当て・タグ管理 | `*` |
+| IdentityStoreReadOnly | identitystore の List/Describe/Get 系 | グループ ID 取得（書き込みなし） | `*` |
 | CloudFormationStackSets | StackSet の作成・更新・削除 | IAM ロール子アカウント配布 | `ssm-fleet-*` |
 | IAMManageSsmFleetRoles | IAM ロール・ポリシーの作成・更新 | StackSet 用 IAM 等 | `ssm-fleet-*` |
 | S3TerraformBackend | S3 バケット作成・操作 | Terraform state 用 | `*-ssm-fleet-tf-state*` |
@@ -36,6 +37,33 @@
 - Organizations 系（API 仕様上 ARN を受け付けない）
 - SSO Admin 系（インスタンス ARN ベースで運用、リソースレベル制限が一部のみ対応）
 - Glue / Athena の参照系（DataCatalog 単位の制御が複雑）
+
+### ⚠️ SSO 権限の重要な注意
+
+`SSOAdminManagePermissionSets` の 23 アクションは Resource `*` 指定です。これは AWS Identity Center の API 仕様上、Permission Set ARN は作成時にしか分からないため事前にリソース限定できない制約によります。
+
+**意味するリスク**:
+
+- インストーラ権限を持つ間は、組織内の**すべての Permission Set を変更・削除可能**
+- 既存の他 Permission Set（AdministratorAccess 等）への割り当ても操作可能
+- 誤操作した場合「他の社員の SSO ログイン環境を破壊する」リスクあり
+
+**緩和策**:
+
+1. **使い捨てを徹底**: インストーラ専用 IAM ユーザー / Permission Set を作成し、セットアップ完了後に**即削除**
+2. **作業ログ**: CloudTrail で SSO 操作を全件記録、想定外操作の事後検知
+3. **作業者を絞る**: 信頼できる管理者 1 名がセットアップを実行
+4. **本番環境では事前にステージング検証**
+
+書き込み権限を含むアクション（参考）:
+
+- `sso:CreatePermissionSet`, `sso:UpdatePermissionSet`, `sso:DeletePermissionSet`
+- `sso:CreateAccountAssignment`, `sso:DeleteAccountAssignment`
+- `sso:AttachManagedPolicyToPermissionSet`, `sso:DetachManagedPolicyFromPermissionSet`
+- `sso:PutInlinePolicyToPermissionSet`, `sso:DeleteInlinePolicyFromPermissionSet`
+- `sso:TagResource`, `sso:UntagResource`
+
+`IdentityStoreReadOnly` は読み取り専用なのでリスクは限定的。
 
 ### 推奨運用
 
