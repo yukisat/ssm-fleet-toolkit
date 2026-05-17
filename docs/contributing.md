@@ -90,6 +90,23 @@ claude_hints: |
 
 metadata.yaml から自動生成される。
 
+#### PyYAML が必要な理由とローカルでの用意
+
+`build-catalog.sh` は metadata.yaml の入れ子フィールド（`pagination`, `cost_controls` 等）を正しく扱うために [PyYAML](https://pyyaml.org/) を使う。PyYAML がない環境では同梱の簡易パーサにフォールバックするが、簡易パーサは入れ子辞書に対応していないためそれらフィールドが `null` になり、CI の `--check` と差分が出る。
+
+macOS のシステム Python は外部パッケージのインストールが制限されているので、`uv` で venv を作って実行するのが確実:
+
+```bash
+# 1 回だけ venv を用意（$TMPDIR は macOS の書き込み可能領域）
+uv venv "$TMPDIR/venv"
+VIRTUAL_ENV="$TMPDIR/venv" uv pip install pyyaml
+
+# 以後の catalog 再生成
+PATH="$TMPDIR/venv/bin:$PATH" ./scripts/build-catalog.sh
+```
+
+CI（`.github/workflows/checks.yml`）は `pip install pyyaml` を入れているのでこの差分は発生しない。
+
 ### 7. テスト
 
 - 検証環境のインスタンスで実行し、出力スキーマと一致するか確認
