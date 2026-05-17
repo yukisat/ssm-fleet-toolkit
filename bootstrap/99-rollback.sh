@@ -102,8 +102,32 @@ if [[ -n "$buckets" ]]; then
   echo "（state バケットは中身を確認してから削除を推奨）"
   if confirm "上記 S3 バケットを削除しますか？（中身も含めて完全削除）"; then
     for b in $buckets; do
-      echo "delete bucket and contents: $b"
-      aws s3 rb "s3://$b" --force --profile "$PROFILE" || true
+      echo "empty versioned bucket: $b"
+      # 通常オブジェクト + Versioning 有効なバケットの全バージョン + DeleteMarker を一括削除
+      while :; do
+        payload=$(aws s3api list-object-versions \
+          --bucket "$b" --max-keys 1000 --profile "$PROFILE" \
+          --output json 2>/dev/null \
+          | python3 -c '
+import json, sys
+data = json.load(sys.stdin) if sys.stdin.isatty() is False else {}
+items = []
+for v in data.get("Versions", []) or []:
+    items.append({"Key": v["Key"], "VersionId": v["VersionId"]})
+for m in data.get("DeleteMarkers", []) or []:
+    items.append({"Key": m["Key"], "VersionId": m["VersionId"]})
+if not items:
+    sys.exit(1)
+print(json.dumps({"Objects": items, "Quiet": True}))
+' 2>/dev/null) || break
+        if [[ -z "$payload" ]]; then break; fi
+        echo "$payload" | aws s3api delete-objects \
+          --bucket "$b" --profile "$PROFILE" \
+          --delete file:///dev/stdin >/dev/null
+      done
+      echo "delete bucket: $b"
+      aws s3api delete-bucket --bucket "$b" --profile "$PROFILE" || true
+      audit_log "delete-s3-bucket" "ok" "bucket=$b"
     done
   fi
 else
