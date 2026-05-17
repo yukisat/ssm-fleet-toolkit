@@ -7,6 +7,7 @@ parameters:
     type: String
     description: ログパス。空なら /var/log/nginx/access.log を使用
     default: ""
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
   StatusCode:
     type: String
     description: ステータスコードフィルタ（例 404, 500, 50 で 5xx）。空ならフィルタなし

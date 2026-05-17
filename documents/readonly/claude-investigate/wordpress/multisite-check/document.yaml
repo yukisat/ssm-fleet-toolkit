@@ -6,10 +6,12 @@ parameters:
   WebRoot:
     type: String
     default: /var/www
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
   SiteDir:
     type: String
     description: 単一サイトのディレクトリ指定（空なら WebRoot 探索）
     default: ""
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: checkMultisite

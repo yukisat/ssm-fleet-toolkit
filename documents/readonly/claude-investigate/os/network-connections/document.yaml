@@ -7,6 +7,7 @@ parameters:
     type: String
     default: "20"
     description: 上位アドレスの取得件数
+    allowedPattern: '^[0-9]+$'
 mainSteps:
   - action: aws:runShellScript
     name: collectNetworkConnections

@@ -6,6 +6,7 @@ parameters:
     type: String
     description: PHP バイナリパス。空なら php コマンドを利用
     default: ""
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: collectPhpVersion

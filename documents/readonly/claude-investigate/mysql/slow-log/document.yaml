@@ -11,6 +11,7 @@ parameters:
     type: String
     default: ""
     description: my.cnf パス。空なら /root/.my.cnf を試す
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: tailMysqlSlowLog
