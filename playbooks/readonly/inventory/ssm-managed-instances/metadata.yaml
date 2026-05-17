@@ -1,0 +1,46 @@
+name: inventory-ssm-managed-instances
+category: inventory
+subcategory: ssm
+safety: readonly
+description: |
+  SSM Agent が登録されているインスタンスの一覧を取得する。
+  Agent 未導入インスタンムの検出、プラットフォーム・バージョン確認、Ping 状態の確認に使う。
+required_permissions:
+  - ssm:DescribeInstanceInformation
+parameters:
+  - name: region
+    type: string
+    required: true
+    description: 調査対象リージョン（例 ap-northeast-1）
+  - name: profile
+    type: string
+    default: ""
+    description: AWS CLI プロファイル名
+  - name: ping_status
+    type: string
+    default: ""
+    description: "フィルタ: Online / Inactive / ConnectionLost / Terminated / 空で全件"
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      instance_id: { type: string }
+      ping_status: { type: string }
+      last_ping: { type: string }
+      platform: { type: string }
+      platform_version: { type: string }
+      agent_version: { type: string }
+      ip_address: { type: string }
+estimated_runtime_seconds: 15
+estimated_cost_usd: 0.00
+pagination:
+  describe_instance_information:
+    max_per_page: 50
+    token_field: NextToken
+    note: --page-size 50 必須。デフォルト 10 だとレートリミットで件数半減する
+claude_hints: |
+  - ping_status=Online 以外のインスタンスは SSM Document 実行不可
+  - ConnectionLost は agent が落ちているか、ネットワーク断の可能性
+  - Inactive は長期間 ping がなかったインスタンス（停止中 or terminate 済み）
+  - agent_version が古い場合は SSM Agent の更新を検討

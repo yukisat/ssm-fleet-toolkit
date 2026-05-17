@@ -1,0 +1,41 @@
+name: cost-forecast
+category: cost
+subcategory: explorer
+safety: readonly
+description: |
+  Cost Explorer で当月の予測コストを取得する。
+  月末に向けたコスト見通しの確認・予算超過リスクの早期検出に使う。
+required_permissions:
+  - ce:GetCostForecast
+parameters:
+  - name: profile
+    type: string
+    default: ""
+    description: AWS CLI プロファイル名（Cost Explorer はグローバル・us-east-1 固定）
+  - name: end_date
+    type: string
+    default: ""
+    description: "予測終了日 YYYY-MM-DD（空なら翌月 1 日）"
+output_schema:
+  type: object
+  properties:
+    total_forecast_usd: { type: number }
+    lower_bound_usd: { type: number }
+    upper_bound_usd: { type: number }
+    mean_value_by_day:
+      type: array
+      items:
+        type: object
+        properties:
+          date: { type: string }
+          forecast_usd: { type: number }
+estimated_runtime_seconds: 5
+estimated_cost_usd: 0.01  # Cost Explorer API は 1 リクエスト $0.01
+cost_controls:
+  ce_api_per_call: 0.01
+  note: Cost Explorer API は 1 リクエストあたり $0.01 の料金が発生する
+claude_hints: |
+  - 月初（1〜3 日）は予測精度が低い。MeanValue の上下幅が広い場合は参考程度に扱う
+  - cost/monthly-by-service と組み合わせて「何のサービスがコストを押し上げているか」を特定する
+  - 予算アラートが設定されているか確認したい場合は budgets:DescribeBudgets を使う
+  - Cost Explorer API は us-east-1 固定（--region us-east-1 必須）
