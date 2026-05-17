@@ -5,9 +5,14 @@ variable "permission_set_name" {
 }
 
 variable "description" {
-  description = "Permission Set の説明"
+  description = "Permission Set の説明（AWS SSO API は ASCII / Latin-1 のみ受け付ける）"
   type        = string
-  default     = "Claude Code による read-only な調査用権限。SSM Document 実行と AWS 環境調査をカバー。"
+  default     = "Read-only investigation permissions for Claude Code (SSM Run Command + AWS environment read-only)."
+
+  validation {
+    condition     = can(regex("^[\\x20-\\x7E]+$", var.description))
+    error_message = "description は ASCII 印字可能文字のみで記述してください（AWS SSO API は非 ASCII を拒否します）。"
+  }
 }
 
 variable "session_duration" {
