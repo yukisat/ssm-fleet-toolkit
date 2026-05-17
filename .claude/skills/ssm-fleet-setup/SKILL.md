@@ -64,19 +64,31 @@ aws sts get-caller-identity 2>&1
 
 **ステップ B: IAM ユーザー作成 + ポリシー付与（利用者が実行）**
 
+`bootstrap/installer-policy.json` は約 5KB あり、IAM インラインポリシーの上限（2048 バイト）を超えるため、**customer-managed policy として作成 → ユーザーにアタッチ** する方式を使う。
+
 ```bash
 # AWS CLI を使う場合（CloudShell 推奨）
 aws iam create-user --user-name ssm-fleet-installer
 
-# 利用者環境に応じてポリシー JSON のパスを差し替え
-aws iam put-user-policy \
-  --user-name ssm-fleet-installer \
+# customer-managed policy として作成（最大 10240 バイト）
+POLICY_ARN=$(aws iam create-policy \
   --policy-name ssm-fleet-installer-policy \
-  --policy-document file://bootstrap/installer-policy.json
+  --policy-document file://bootstrap/installer-policy.json \
+  --query 'Policy.Arn' --output text)
+
+# ユーザーにアタッチ
+aws iam attach-user-policy \
+  --user-name ssm-fleet-installer \
+  --policy-arn "$POLICY_ARN"
+
+# 確認
+aws iam list-attached-user-policies --user-name ssm-fleet-installer --output table
 
 # アクセスキー発行（出力をその場で控える、画面でしか見られない）
 aws iam create-access-key --user-name ssm-fleet-installer
 ```
+
+**注意**: `aws iam put-user-policy`（インラインポリシー）は 2048 バイト上限のため `installer-policy.json` には使えない。必ず `create-policy` + `attach-user-policy` を使う。
 
 コンソール手順は `docs/manual-setup.md`（あれば）を参照。
 
@@ -171,7 +183,21 @@ S3 バケット + DynamoDB テーブルを委任管理アカウントに作成�
 - 作成されたリソース一覧
 - 監査ログのパス（`install-audit.log`）
 - 次にできること（`/ssm-fleet-investigate` の使い方）
-- インストーラ権限の削除推奨（`ssm-fleet-installer` IAM ユーザーは Step 1 で作成したもの。完了後の削除手順を提示）
+- インストーラ権限の削除推奨（`ssm-fleet-installer` IAM ユーザーは Step 1 で作成したもの）。利用者に以下の削除手順を提示:
+
+```bash
+# アクセスキー削除
+KEYS=$(aws iam list-access-keys --user-name ssm-fleet-installer --query 'AccessKeyMetadata[].AccessKeyId' --output text)
+for k in $KEYS; do aws iam delete-access-key --user-name ssm-fleet-installer --access-key-id "$k"; done
+
+# Managed policy デタッチ + 削除
+POLICY_ARN=$(aws iam list-attached-user-policies --user-name ssm-fleet-installer --query 'AttachedPolicies[?PolicyName==`ssm-fleet-installer-policy`].PolicyArn | [0]' --output text)
+aws iam detach-user-policy --user-name ssm-fleet-installer --policy-arn "$POLICY_ARN"
+aws iam delete-policy --policy-arn "$POLICY_ARN"
+
+# ユーザー削除
+aws iam delete-user --user-name ssm-fleet-installer
+```
 
 ## 安全ゲート
 
