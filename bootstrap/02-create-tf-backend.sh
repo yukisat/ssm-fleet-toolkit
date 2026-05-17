@@ -13,6 +13,10 @@
 
 set -euo pipefail
 
+# shellcheck disable=SC1091  # _lib.sh は同階層、CI では -x 無しで実行されるため info を抑止
+source "$(dirname "$0")/_lib.sh"
+audit_setup "$@"
+
 PROFILE="${AWS_PROFILE:-default}"
 REGION="${AWS_REGION:-ap-northeast-1}"
 DRY_RUN=0
