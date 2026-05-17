@@ -764,7 +764,20 @@
           }
         ],
         "estimated_runtime_seconds": 30,
-        "estimated_cost_usd": 0.01
+        "estimated_cost_usd": 0.01,
+        "pagination": null,
+        "cost_controls": {
+          "workgroup": {
+            "name": "ssm-fleet-investigator",
+            "bytes_scanned_cutoff_per_query": 10737418240,
+            "enforce_workgroup_configuration": true,
+            "result_encryption": "SSE_S3",
+            "publish_cloudwatch_metrics": true
+          },
+          "partition_pruning_required": true,
+          "dry_run_recommended": true,
+          "pricing_basis": "$5 per TB scanned (2026-05 時点)"
+        }
       },
       {
         "name": "cloudwatch-alb-5xx-rate",
@@ -802,7 +815,16 @@
           }
         ],
         "estimated_runtime_seconds": 10,
-        "estimated_cost_usd": 0.0
+        "estimated_cost_usd": 0.0,
+        "pagination": {
+          "cloudwatch_get_metric_data": {
+            "max_per_page": 100800,
+            "response_size_limit": "~1MB",
+            "token_field": "NextToken",
+            "note": "長期間×短 period では NextToken ループ必須。CLI オートページネーション可"
+          }
+        },
+        "cost_controls": null
       },
       {
         "name": "cloudwatch-ec2-cpu-stats",
@@ -838,7 +860,9 @@
           }
         ],
         "estimated_runtime_seconds": 5,
-        "estimated_cost_usd": 0.0
+        "estimated_cost_usd": 0.0,
+        "pagination": null,
+        "cost_controls": null
       },
       {
         "name": "ec2-describe-by-tag",
@@ -873,7 +897,20 @@
           }
         ],
         "estimated_runtime_seconds": 30,
-        "estimated_cost_usd": 0.0
+        "estimated_cost_usd": 0.0,
+        "pagination": {
+          "ec2_describe_instances": {
+            "max_per_page": 1000,
+            "token_field": "NextToken",
+            "note": "CLI オートページネーション利用推奨（--no-paginate を付けない）"
+          },
+          "ssm_describe_instance_information": {
+            "max_per_page": 50,
+            "token_field": "NextToken",
+            "note": "50 台超の環境では NextToken ループ必須。--page-size 50 を必ず指定"
+          }
+        },
+        "cost_controls": null
       }
     ]
   }

@@ -5,6 +5,21 @@ Semantic Versioning 風: MAJOR.MINOR.PATCH（破壊的変更 / 機能追加 / �
 
 ## [Unreleased]
 
+### Playbook hardening (AWS ベストプラクティス反映)
+
+- ページネーション規約を `playbooks/README.md` に明文化
+  - 調査系 API は `--no-paginate` を使わず CLI オートページネーションか NextToken ループ必須
+  - `metadata.yaml` に `pagination` フィールドを追加（API ごとの上限・トークン名）
+- 対象 playbook を更新:
+  - `ec2/describe-by-tag`: describe-instances（max 1000）/ describe-instance-information（max 50）の NextToken ループ手順追加
+  - `cloudwatch/alb-5xx-rate`: get-metric-data の NextToken ループ手順追加
+- Athena コスト制御を `athena/cloudfront-top-uri` に組み込み
+  - 専用 WorkGroup `ssm-fleet-investigator` で `BytesScannedCutoffPerQuery: 10 GiB`、`EnforceWorkGroupConfiguration`、結果バケット暗号化、CloudWatch メトリクス出力
+  - 事前ドライランで実績スキャン量を線形外挿してから本番実行する手順
+  - 実績スキャン量の事後確認手順
+  - `metadata.yaml` に `cost_controls` フィールド追加
+- `playbooks/README.md` に「ページネーション」「Athena コスト制御」共通規約セクション追加
+
 ### Scope (Breaking change: SSO + Organizations 一本化)
 
 - サポート環境を **AWS Organizations + AWS Identity Center (SSO)** 統合済み環境のみに絞り込み

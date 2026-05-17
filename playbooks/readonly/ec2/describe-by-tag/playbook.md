@@ -14,6 +14,8 @@
 
 ## 実行（単一リージョン）
 
+`describe-instances` は 1 ページあたり最大 1000 件しか返らない（`MaxResults`）。100 台超の環境では `NextToken` を辿らないと取りこぼすため、AWS CLI 組み込みのオートページネーションを使う（`--no-paginate` を付けない）。
+
 ```bash
 aws ec2 describe-instances \
   --filters "Name=tag:$TAG_KEY,Values=$TAG_VALUE" \
@@ -30,6 +32,20 @@ aws ec2 describe-instances \
   --output json
 ```
 
+明示ループしたい場合は `NextToken` を回す:
+
+```bash
+NEXT=""
+while :; do
+  RESP=$(aws ec2 describe-instances --filters "Name=tag:$TAG_KEY,Values=$TAG_VALUE" \
+    --region "$REGION" --profile "$PROFILE" --max-results 1000 \
+    ${NEXT:+--starting-token "$NEXT"} --output json)
+  echo "$RESP" | jq '.Reservations[].Instances[].InstanceId'
+  NEXT=$(echo "$RESP" | jq -r '.NextToken // empty')
+  [ -z "$NEXT" ] && break
+done
+```
+
 ## 全リージョン横断
 
 ```bash
@@ -37,11 +53,30 @@ REGIONS=$(aws ec2 describe-regions --query 'Regions[].RegionName' --output text 
 for r in $REGIONS; do
   echo "=== $r ==="
   aws ec2 describe-instances --filters "Name=tag:$TAG_KEY,Values=$TAG_VALUE" \
-    --region "$r" --profile "$PROFILE" --query 'Reservations[].Instances[].InstanceId' --output text
+    --region "$r" --profile "$PROFILE" \
+    --query 'Reservations[].Instances[].InstanceId' --output text
 done
 ```
 
+`describe-instances` は CLI のオートページネーションが効くので `--no-paginate` を付けない。全件取得が保証される。
+
 ## SSM Online 状態の確認
+
+`describe-instance-information` は 1 ページあたり最大 50 件。50 台超の環境では `NextToken` ループが必須:
+
+```bash
+NEXT=""
+while :; do
+  RESP=$(aws ssm describe-instance-information \
+    --page-size 50 --region "$REGION" --profile "$PROFILE" \
+    ${NEXT:+--starting-token "$NEXT"} --output json)
+  echo "$RESP" | jq -r '.InstanceInformationList[] | "\(.InstanceId)\t\(.PingStatus)\t\(.LastPingDateTime)"'
+  NEXT=$(echo "$RESP" | jq -r '.NextToken // empty')
+  [ -z "$NEXT" ] && break
+done
+```
+
+ワンライナーで CLI のオートページネーションに任せる場合（`--no-paginate` を付けない）:
 
 ```bash
 aws ssm describe-instance-information --page-size 50 --region "$REGION" --profile "$PROFILE" \
@@ -52,4 +87,5 @@ aws ssm describe-instance-information --page-size 50 --region "$REGION" --profil
 ## 注意点
 
 - `--page-size 50` を必ず付ける（デフォルト 10 だとレートリミットで件数半減）
+- ページネーションを止める `--no-paginate` は調査用途では使わない（取りこぼし防止）
 - 全リージョン横断は時間がかかる、対象が分かれば region 指定

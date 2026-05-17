@@ -42,15 +42,61 @@ sed -e "s/{DATABASE}/$DATABASE/g" \
     query.sql > /tmp/query.sql
 ```
 
-### 3. クエリ実行
+### 3. 専用 WorkGroup 経由でクエリ実行（コスト制御の中核）
+
+`primary` WorkGroup は直接使わない。スキャン量上限を設定した専用 WorkGroup `ssm-fleet-investigator` を使う:
 
 ```bash
+WORKGROUP="ssm-fleet-investigator"
+
 QUERY_ID=$(aws athena start-query-execution \
   --query-string "$(cat /tmp/query.sql)" \
-  --result-configuration OutputLocation=s3://<account>-athena-query-results-ap-northeast-1/ \
-  --work-group primary \
+  --work-group "$WORKGROUP" \
   --query QueryExecutionId --output text \
   --profile <profile>)
+```
+
+WorkGroup は運用者が事前に 1 回だけ作成しておく:
+
+```bash
+aws athena create-work-group \
+  --name ssm-fleet-investigator \
+  --configuration '{
+    "ResultConfiguration": {
+      "OutputLocation": "s3://<account>-athena-query-results-ap-northeast-1/",
+      "EncryptionConfiguration": {"EncryptionOption": "SSE_S3"}
+    },
+    "BytesScannedCutoffPerQuery": 10737418240,
+    "EnforceWorkGroupConfiguration": true,
+    "PublishCloudWatchMetricsEnabled": true,
+    "RequesterPaysEnabled": false
+  }' \
+  --profile <profile>
+```
+
+主要な制御:
+
+- `BytesScannedCutoffPerQuery: 10 GiB` — 上限超過時はクエリ強制中断。WHERE 句を外したり partition 指定漏れで暴走しても保険になる
+- `EnforceWorkGroupConfiguration: true` — クライアントが OutputLocation・暗号化設定を上書き不可
+- `EncryptionConfiguration: SSE_S3` — 結果バケット暗号化
+- `PublishCloudWatchMetricsEnabled: true` — `AWS/Athena` Namespace でスキャン量・実行時間を可視化（コスト監視・アラート用）
+
+### 3.1 事前スキャン量見積もり（推奨）
+
+本番期間で投げる前に、短期間（例: 1 時間）でドライランしてスキャン量を確認し、本番期間に線形外挿する:
+
+```bash
+TEST_QUERY_ID=$(aws athena start-query-execution \
+  --query-string "$(sed "s|{TIME_TO}|<time_from+1h>|" /tmp/query.sql)" \
+  --work-group "$WORKGROUP" \
+  --query QueryExecutionId --output text --profile <profile>)
+
+# 完了後にスキャン量を確認
+aws athena get-query-execution --query-execution-id "$TEST_QUERY_ID" \
+  --query 'QueryExecution.Statistics.DataScannedInBytes' --output text \
+  --profile <profile>
+# 表示バイト数 × (本番期間時間数 / 1) で本番見積もり
+# $5/TB で換算 → 本番投入可否を判断
 ```
 
 ### 4. 完了待機
@@ -67,11 +113,18 @@ while true; do
 done
 ```
 
-### 5. 結果取得
+`BytesScannedCutoffPerQuery` 超過時は `State=FAILED`、`StateChangeReason` に `Bytes scanned limit was exceeded` が入る。
+
+### 5. 結果取得とスキャン量実績の確認
 
 ```bash
 aws athena get-query-results --query-execution-id "$QUERY_ID" \
   --output json --profile <profile>
+
+# 実績スキャン量・コストを確認
+aws athena get-query-execution --query-execution-id "$QUERY_ID" \
+  --query 'QueryExecution.Statistics.{Scanned:DataScannedInBytes,Millis:EngineExecutionTimeInMillis}' \
+  --output table --profile <profile>
 ```
 
 ## 結果の解釈
@@ -82,11 +135,17 @@ aws athena get-query-results --query-execution-id "$QUERY_ID" \
 - distinct_clients が少数 → 特定ソースからの攻撃
 - 404 が上位 → 設定ミス・欠損コンテンツ
 
-## コスト
+## コスト制御まとめ
 
-- Athena は **スキャンしたデータ量** で課金（$5/TB）
-- 期間を短く保つ・partition projection で対象パーティションを絞ることが重要
-- 1 時間範囲なら通常 $0.01 未満
+Athena は **スキャンしたデータ量** で課金（$5/TB, 2026-05 時点）。本 playbook では多層防御で暴走を防ぐ:
+
+1. **WorkGroup `BytesScannedCutoffPerQuery: 10 GiB`** — クエリ単位の絶対上限。設定漏れの最後の砦
+2. **partition pruning** — `query.sql` の WHERE 句で `year/month/day/hour` を必ず指定。partition projection を使うとさらに高速
+3. **事前ドライラン** — 短期間で実績を取り本番期間に外挿（手順 3.1）
+4. **`EnforceWorkGroupConfiguration: true`** — クライアントが WorkGroup 設定を上書きできない
+5. **CloudWatch メトリクス監視** — `AWS/Athena` Namespace の `ProcessedBytes` で異常検知アラート
+
+参考: 1 時間範囲・partition pruning ありなら通常 $0.01 未満。1 日範囲で約 $0.10 〜 $0.50。
 
 ## 関連
 
