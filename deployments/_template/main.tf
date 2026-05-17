@@ -47,14 +47,31 @@ module "permission_set" {
   principal_type     = "GROUP"
 }
 
-# SSM Document の登録 + Organizations 全アカウント共有
-module "doc_disk_usage" {
-  source = "../../modules/ssm-document"
+# SSM Document の自動列挙
+# documents/readonly/claude-investigate/<category>/<name>/document.yaml を全て登録する
+locals {
+  documents_root = "${path.module}/../../documents/readonly/claude-investigate"
 
-  document_name      = "claude-investigate-os-disk-usage"
-  document_path      = "../../documents/readonly/claude-investigate/os/disk-usage/document.yaml"
-  category           = "os"
-  shared_account_ids = local.target_account_ids
+  document_files = fileset(local.documents_root, "*/*/document.yaml")
+  # 例: ["os/disk-usage/document.yaml", "nginx/access-log/document.yaml", ...]
+
+  documents = {
+    for p in local.document_files :
+    replace(dirname(p), "/", "-") => {
+      path     = "${local.documents_root}/${p}"
+      category = split("/", p)[0]
+    }
+  }
+  # 例: { "os-disk-usage" = { path = "...", category = "os" }, ... }
 }
 
-# 他 Document は同様に追加（雛形）
+# SSM Document の登録 + Organizations 全アカウント共有
+module "doc" {
+  source   = "../../modules/ssm-document"
+  for_each = local.documents
+
+  document_name      = "claude-investigate-${each.key}"
+  document_path      = each.value.path
+  category           = each.value.category
+  shared_account_ids = local.target_account_ids
+}
