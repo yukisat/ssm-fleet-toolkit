@@ -75,6 +75,35 @@
 - `/etc/shadow`, `~/.ssh/`, `/etc/ssl/private/` 等へのアクセスを避ける
 - ログファイルの内容は通常の運用ログのみ（認証ログは含む可能性、`security-policy.md` 参照）
 
+### T5.1: SSM SendCommand の対象インスタンス範囲
+
+**脅威**: ClaudeInvestigator Permission Set は `ssm:SendCommand` を `arn:aws:ec2:*:*:instance/*` に対して許可しており、対象アカウント内の**全 EC2 インスタンス**に Document を実行できる。
+
+**現状の対策**:
+- 実行できる Document は `claude-investigate-*` プレフィックスのもののみ（readonly に限定）
+- すべての Document は読み取り専用で、書き込み・変更操作は不可
+
+**残るリスク**:
+- 「全インスタンスに対して読み取りができる」状態。最小権限の原則からは外れる
+- 検証・本番混在のアカウントだと、検証外のインスタンスにも実行可能
+
+**より厳格にしたい場合の方針**（運用判断）:
+
+`modules/sso-permission-set/policies/claude-investigator-ssm.json` の `SSMRunInvestigateDocuments` ステートメントに `aws:ResourceTag` 条件を追加し、特定タグ付きインスタンスのみに絞る:
+
+```json
+{
+  "Resource": "arn:aws:ec2:*:*:instance/*",
+  "Condition": {
+    "StringEquals": { "aws:ResourceTag/ssm-fleet:investigatable": "true" }
+  }
+}
+```
+
+利用者は調査対象インスタンスに `ssm-fleet:investigatable=true` をタグ付けして opt-in する運用になる。タグ無しのインスタンスは調査不可になる代わり、誤実行・横展開リスクが減る。
+
+採否はトレードオフ（運用負荷 vs セキュリティ）の判断。デフォルトは現状（全インスタンス許可）のままで、必要な環境だけポリシーをカスタマイズする想定。
+
 ### T6: 子アカウントへの不正アクセス
 
 **脅威**: 委任管理アカウント経由で子アカウントの予期しないリソースが操作される。
