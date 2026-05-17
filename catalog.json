@@ -865,6 +865,78 @@
         "cost_controls": null
       },
       {
+        "name": "cost-forecast",
+        "path": "playbooks/readonly/cost/forecast",
+        "category": "cost",
+        "subcategory": "explorer",
+        "safety": "readonly",
+        "description": "Cost Explorer で当月の予測コストを取得する。\n月末に向けたコスト見通しの確認・予算超過リスクの早期検出に使う。",
+        "required_permissions": [
+          "ce:GetCostForecast"
+        ],
+        "parameters": [
+          {
+            "name": "profile",
+            "type": "string",
+            "default": "",
+            "description": "AWS CLI プロファイル名（Cost Explorer はグローバル・us-east-1 固定）"
+          },
+          {
+            "name": "end_date",
+            "type": "string",
+            "default": "",
+            "description": "予測終了日 YYYY-MM-DD（空なら翌月 1 日）"
+          }
+        ],
+        "estimated_runtime_seconds": 5,
+        "estimated_cost_usd": 0.01,
+        "pagination": null,
+        "cost_controls": {
+          "ce_api_per_call": 0.01,
+          "note": "Cost Explorer API は 1 リクエストあたり $0.01 の料金が発生する"
+        }
+      },
+      {
+        "name": "cost-monthly-by-service",
+        "path": "playbooks/readonly/cost/monthly-by-service",
+        "category": "cost",
+        "subcategory": "explorer",
+        "safety": "readonly",
+        "description": "Cost Explorer で当月のサービス別コストを取得する。\nコスト急増の原因サービス特定や、月次コスト確認に使う。",
+        "required_permissions": [
+          "ce:GetCostAndUsage"
+        ],
+        "parameters": [
+          {
+            "name": "profile",
+            "type": "string",
+            "default": "",
+            "description": "AWS CLI プロファイル名（Cost Explorer はグローバル・us-east-1 固定）"
+          },
+          {
+            "name": "start_date",
+            "type": "string",
+            "default": "",
+            "description": "集計開始日 YYYY-MM-DD（空なら当月 1 日）"
+          },
+          {
+            "name": "end_date",
+            "type": "string",
+            "default": "",
+            "description": "集計終了日 YYYY-MM-DD（空なら翌月 1 日）"
+          }
+        ],
+        "estimated_runtime_seconds": 5,
+        "estimated_cost_usd": 0.01,
+        "pagination": {
+          "note": "Cost Explorer は通常 1 ページで全件返るが ResultsByTime でページネーションあり"
+        },
+        "cost_controls": {
+          "ce_api_per_call": 0.01,
+          "note": "Cost Explorer API は 1 リクエストあたり $0.01 の料金が発生する"
+        }
+      },
+      {
         "name": "ec2-describe-by-tag",
         "path": "playbooks/readonly/ec2/describe-by-tag",
         "category": "ec2",
@@ -908,6 +980,124 @@
             "max_per_page": 50,
             "token_field": "NextToken",
             "note": "50 台超の環境では NextToken ループ必須。--page-size 50 を必ず指定"
+          }
+        },
+        "cost_controls": null
+      },
+      {
+        "name": "inventory-lightsail-instances",
+        "path": "playbooks/readonly/inventory/lightsail-instances",
+        "category": "inventory",
+        "subcategory": "lightsail",
+        "safety": "readonly",
+        "description": "Lightsail インスタンス・データベース・ロードバランサーの一覧を取得する。\nEC2 と別管理になっているため見落としやすい Lightsail リソースの棚卸しに使う。",
+        "required_permissions": [
+          "lightsail:GetInstances",
+          "lightsail:GetRelationalDatabases",
+          "lightsail:GetLoadBalancers"
+        ],
+        "parameters": [
+          {
+            "name": "region",
+            "type": "string",
+            "required": true,
+            "description": "調査対象リージョン（例 ap-northeast-1）"
+          },
+          {
+            "name": "profile",
+            "type": "string",
+            "default": "",
+            "description": "AWS CLI プロファイル名"
+          }
+        ],
+        "estimated_runtime_seconds": 10,
+        "estimated_cost_usd": 0.0,
+        "pagination": {
+          "get_instances": {
+            "token_field": "pageToken",
+            "note": "pageToken が返ってくる間ループ"
+          },
+          "get_relational_databases": {
+            "token_field": "pageToken"
+          },
+          "get_load_balancers": {
+            "token_field": "pageToken"
+          }
+        },
+        "cost_controls": null
+      },
+      {
+        "name": "inventory-resource-by-service",
+        "path": "playbooks/readonly/inventory/resource-by-service",
+        "category": "inventory",
+        "subcategory": "account",
+        "safety": "readonly",
+        "description": "Resource Groups Tagging API でアカウント内の全リソースをサービス別にカウントする。\n未使用アカウントの棚卸しや、想定外リソースの存在確認に使う。",
+        "required_permissions": [
+          "tag:GetResources"
+        ],
+        "parameters": [
+          {
+            "name": "region",
+            "type": "string",
+            "required": true,
+            "description": "調査対象リージョン（例 ap-northeast-1）"
+          },
+          {
+            "name": "profile",
+            "type": "string",
+            "default": "",
+            "description": "AWS CLI プロファイル名"
+          }
+        ],
+        "estimated_runtime_seconds": 30,
+        "estimated_cost_usd": 0.0,
+        "pagination": {
+          "get_resources": {
+            "max_per_page": 100,
+            "token_field": "PaginationToken",
+            "note": "PaginationToken が空になるまでループ必須"
+          }
+        },
+        "cost_controls": null
+      },
+      {
+        "name": "inventory-ssm-managed-instances",
+        "path": "playbooks/readonly/inventory/ssm-managed-instances",
+        "category": "inventory",
+        "subcategory": "ssm",
+        "safety": "readonly",
+        "description": "SSM Agent が登録されているインスタンスの一覧を取得する。\nAgent 未導入インスタンムの検出、プラットフォーム・バージョン確認、Ping 状態の確認に使う。",
+        "required_permissions": [
+          "ssm:DescribeInstanceInformation"
+        ],
+        "parameters": [
+          {
+            "name": "region",
+            "type": "string",
+            "required": true,
+            "description": "調査対象リージョン（例 ap-northeast-1）"
+          },
+          {
+            "name": "profile",
+            "type": "string",
+            "default": "",
+            "description": "AWS CLI プロファイル名"
+          },
+          {
+            "name": "ping_status",
+            "type": "string",
+            "default": "",
+            "description": "フィルタ: Online / Inactive / ConnectionLost / Terminated / 空で全件"
+          }
+        ],
+        "estimated_runtime_seconds": 15,
+        "estimated_cost_usd": 0.0,
+        "pagination": {
+          "describe_instance_information": {
+            "max_per_page": 50,
+            "token_field": "NextToken",
+            "note": "--page-size 50 必須。デフォルト 10 だとレートリミットで件数半減する"
           }
         },
         "cost_controls": null

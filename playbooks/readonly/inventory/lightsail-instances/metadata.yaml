@@ -1,0 +1,52 @@
+name: inventory-lightsail-instances
+category: inventory
+subcategory: lightsail
+safety: readonly
+description: |
+  Lightsail インスタンス・データベース・ロードバランサーの一覧を取得する。
+  EC2 と別管理になっているため見落としやすい Lightsail リソースの棚卸しに使う。
+required_permissions:
+  - lightsail:GetInstances
+  - lightsail:GetRelationalDatabases
+  - lightsail:GetLoadBalancers
+parameters:
+  - name: region
+    type: string
+    required: true
+    description: 調査対象リージョン（例 ap-northeast-1）
+  - name: profile
+    type: string
+    default: ""
+    description: AWS CLI プロファイル名
+output_schema:
+  type: object
+  properties:
+    instances:
+      type: array
+      items:
+        type: object
+        properties:
+          name: { type: string }
+          state: { type: string }
+          bundle_id: { type: string }
+          public_ip: { type: string }
+          private_ip: { type: string }
+    databases:
+      type: array
+    load_balancers:
+      type: array
+estimated_runtime_seconds: 10
+estimated_cost_usd: 0.00
+pagination:
+  get_instances:
+    token_field: pageToken
+    note: pageToken が返ってくる間ループ
+  get_relational_databases:
+    token_field: pageToken
+  get_load_balancers:
+    token_field: pageToken
+claude_hints: |
+  - Lightsail は EC2 describe-instances に含まれないため見落としやすい
+  - bundle_id でインスタンスのサイズ（CPU/RAM）が分かる
+  - state=running 以外（stopped 等）はコスト削減候補
+  - Lightsail は一部のリージョンにしか存在しない
