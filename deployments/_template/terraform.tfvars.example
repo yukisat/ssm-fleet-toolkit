@@ -3,6 +3,10 @@ primary_region        = "ap-northeast-1"
 permission_set_name   = "ClaudeInvestigator"
 investigator_group_id = "<paste IdentityStore Group ID here>"
 
-enable_ssm_investigation         = true
-enable_athena_investigation      = false
-enable_cloudwatch_investigation  = false
+enable_ssm_investigation        = true
+
+# 以下 2 つは Permission Set に inline policy を追加するだけ。
+# playbook 自体は playbooks/readonly/ 以下に手順書として常にあり、
+# Claude が catalog から参照する。true / false は権限の有無だけを切り替える。
+enable_athena_investigation     = false
+enable_cloudwatch_investigation = false
