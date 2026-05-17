@@ -36,7 +36,77 @@ plan mode で以下を提示し、利用者の承認を得る:
 
 利用者が ExitPlanMode で承認するまで実際の処理は開始しない。
 
-### Step 1: 前提環境の確認
+### Step 1: 認証状態の検出と IAM 利用者の準備
+
+**ここで AWS 認証を確認・準備する**。`bootstrap/` 配下のスクリプト実行に先立ち、Claude が AWS に到達できる状態を整える。
+
+#### 1-1. 現在の認証状態を確認
+
+```bash
+aws sts get-caller-identity 2>&1
+```
+
+成功（`Account` / `Arn` が返る）した場合 → 1-2 で権限充足を確認 → Step 2 へ。
+失敗（`Unable to locate credentials` 等）した場合 → 1-3 へ。
+
+#### 1-2. 既存認証の権限充足を確認
+
+`bootstrap/installer-policy.json` に列挙された権限が付与されているか、`AdministratorAccess` 相当か、いずれかであることを確認。
+不足する権限があれば 1-3 の手順で適切な IAM ユーザーを作成し直す。
+
+#### 1-3. インストール用 IAM ユーザー作成の案内（認証未設定 or 権限不足の場合）
+
+利用者は通常 IAM ユーザーを事前用意していないため、root 権限を持つアカウントで以下を一度だけ実行してもらう。CloudShell（root ログイン）またはローカル PC でも可。
+
+**ステップ A: インラインポリシー JSON を控える**
+
+`bootstrap/installer-policy.json` の内容を利用者に提示する。これがセットアップ完了まで必要な最小権限。
+
+**ステップ B: IAM ユーザー作成 + ポリシー付与（利用者が実行）**
+
+```bash
+# AWS CLI を使う場合（CloudShell 推奨）
+aws iam create-user --user-name ssm-fleet-installer
+
+# 利用者環境に応じてポリシー JSON のパスを差し替え
+aws iam put-user-policy \
+  --user-name ssm-fleet-installer \
+  --policy-name ssm-fleet-installer-policy \
+  --policy-document file://bootstrap/installer-policy.json
+
+# アクセスキー発行（出力をその場で控える、画面でしか見られない）
+aws iam create-access-key --user-name ssm-fleet-installer
+```
+
+コンソール手順は `docs/manual-setup.md`（あれば）を参照。
+
+**ステップ C: ローカルに認証を設定（利用者が実行）**
+
+```bash
+aws configure --profile ssm-fleet-installer
+# AWS Access Key ID:     <ステップ B の出力>
+# AWS Secret Access Key: <ステップ B の出力>
+# Default region:        ap-northeast-1
+# Default output:        json
+
+# 動作確認
+aws sts get-caller-identity --profile ssm-fleet-installer
+```
+
+その後、本セットアップを `AWS_PROFILE=ssm-fleet-installer` で再実行するよう案内する。
+
+**重要な注意事項を必ず提示**:
+
+- このユーザーは **セットアップ完了後に削除可能**。常用のものではない
+- アクセスキーを `git` にコミットしない
+- インラインポリシーは `bootstrap/installer-policy.json` 1 つだけ。`AdministratorAccess` の付与は推奨しない
+- root のアクセスキーは絶対に作らない
+
+#### 1-4. 認証確認後の継続
+
+`aws sts get-caller-identity` が成功してから Step 2 に進む。
+
+### Step 2: 前提環境の確認
 
 このツールは AWS Organizations + AWS Identity Center (SSO) 統合済み環境のみをサポート。
 利用者環境が以下を満たすか確認する:
@@ -48,7 +118,7 @@ plan mode で以下を提示し、利用者の承認を得る:
 
 いずれかを満たさない場合は対象外として中止し、フォークでの対応を提案する。
 
-### Step 2: 前提条件チェック
+### Step 3: 前提条件チェック
 
 `./bootstrap/00-check-prerequisites.sh` を実行。
 不足項目があれば利用者に承認を得てから個別に修復:
@@ -56,12 +126,12 @@ plan mode で以下を提示し、利用者の承認を得る:
 - StackSets trusted access 未有効 → `01-enable-stacksets-trusted.sh`
 - SSO 未ログイン → 利用者に `aws sso login` を依頼
 
-### Step 3: 既存リソースとの衝突チェック
+### Step 4: 既存リソースとの衝突チェック
 
 `./bootstrap/pre-flight-check.sh` を実行。
 衝突があれば中止し、利用者と方針を相談（別名指定 or import）。
 
-### Step 4: 委任管理アカウントの選定（Organizations の場合）
+### Step 5: 委任管理アカウントの選定（Organizations の場合）
 
 SSO で利用可能なアカウント一覧から利用者に選ばせる。
 推奨基準を提示:
@@ -70,17 +140,17 @@ SSO で利用可能なアカウント一覧から利用者に選ばせる。
 - アクセス頻度が低いアカウントが望ましい
 - 既に管理機能を集約している場合はそちらに統合
 
-### Step 5: Terraform backend の準備
+### Step 6: Terraform backend の準備
 
 S3 バケット + DynamoDB テーブルを委任管理アカウントに作成。
 利用者の承認後、`./bootstrap/02-create-tf-backend.sh` を実行。
 
-### Step 6: deployments/<org>/ の生成
+### Step 7: deployments/<org>/ の生成
 
 `./bootstrap/03-init-deployment.sh --name <org>` で
 `deployments/_template/` をコピーし変数を埋める。
 
-### Step 7: Terraform 実行
+### Step 8: Terraform 実行
 
 各段階で `terraform plan` を提示し承認を得てから `apply`:
 
@@ -91,17 +161,17 @@ S3 バケット + DynamoDB テーブルを委任管理アカウントに作成�
 
 各 plan は `0 to change, 0 to destroy` であることを必ず確認・報告。
 
-### Step 8: 動作確認
+### Step 9: 動作確認
 
 テストインスタンスに対して `claude-investigate-os-disk-usage` を実行し、
 正常応答が返ることを確認。
 
-### Step 9: 完了報告
+### Step 10: 完了報告
 
 - 作成されたリソース一覧
 - 監査ログのパス（`install-audit.log`）
 - 次にできること（`/ssm-fleet-investigate` の使い方）
-- インストーラ権限の削除推奨
+- インストーラ権限の削除推奨（`ssm-fleet-installer` IAM ユーザーは Step 1 で作成したもの。完了後の削除手順を提示）
 
 ## 安全ゲート
 
