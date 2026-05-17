@@ -13,6 +13,10 @@
 
 set -euo pipefail
 
+# shellcheck source=_lib.sh
+source "$(dirname "$0")/_lib.sh"
+audit_setup "$@"
+
 PROFILE="${AWS_PROFILE:-default}"
 REGION="${AWS_REGION:-ap-northeast-1}"
 DRY_RUN=0

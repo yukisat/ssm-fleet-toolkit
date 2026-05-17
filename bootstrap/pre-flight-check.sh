@@ -12,6 +12,10 @@
 
 set -euo pipefail
 
+# shellcheck source=_lib.sh
+source "$(dirname "$0")/_lib.sh"
+audit_setup "$@"
+
 PROFILE="${AWS_PROFILE:-default}"
 PERMISSION_SET_NAME="${PERMISSION_SET_NAME:-ClaudeInvestigator}"
 TF_STATE_BUCKET_PREFIX="${TF_STATE_BUCKET_PREFIX:-}"  # 呼び出し側から指定
