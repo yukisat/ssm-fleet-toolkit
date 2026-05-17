@@ -31,5 +31,6 @@ audit_log() {
 #   スクリプト先頭で呼ぶ。開始ログ + 終了時のログを仕込む（成功・失敗を自動判別）。
 audit_setup() {
   audit_log "start" "info" "args: $*"
+  # shellcheck disable=SC2154  # __rc は trap 内で $? から代入される（同一式内のため shellcheck は検知不可）
   trap '__rc=$?; if [ $__rc -eq 0 ]; then audit_log "exit" "ok" ""; else audit_log "exit" "fail" "exit_code=$__rc"; fi' EXIT
 }
