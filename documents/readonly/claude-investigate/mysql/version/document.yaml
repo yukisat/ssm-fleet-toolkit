@@ -7,6 +7,7 @@ parameters:
     type: String
     description: mysql バイナリパス。空なら mysql コマンド
     default: ""
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: collectMysqlVersion

@@ -7,10 +7,12 @@ parameters:
     type: String
     description: 確認する設定ファイル名（例 example.com.conf）。空なら一覧
     default: ""
+    allowedPattern: '^[A-Za-z0-9._-]*$'
   ConfigDir:
     type: String
     description: nginx 設定ディレクトリ。空なら自動探索
     default: ""
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: showNginxConfig

@@ -6,6 +6,7 @@ parameters:
     type: String
     description: PHP-FPM 設定ディレクトリ。空なら自動探索
     default: ""
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: collectFpmPool

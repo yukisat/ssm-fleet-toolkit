@@ -7,10 +7,12 @@ parameters:
     type: String
     description: WordPress サイトの親ディレクトリ
     default: /var/www
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
   SiteDir:
     type: String
     description: 単一サイトのディレクトリ（指定時はそのサイトのみ）
     default: ""
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: collectPluginList
