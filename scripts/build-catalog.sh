@@ -221,7 +221,7 @@ def load_metadata(path):
 
 
 ssm_documents = []
-aws_playbooks = []
+playbooks = []
 
 docs_root = repo_root / "documents" / "readonly" / "claude-investigate"
 if docs_root.exists():
@@ -260,14 +260,14 @@ if playbooks_root.exists():
             "pagination": meta.get("pagination"),
             "cost_controls": meta.get("cost_controls"),
         }
-        aws_playbooks.append(entry)
+        playbooks.append(entry)
 
 catalog = {
     "version": "0.3.0",
     "generator": "scripts/build-catalog.sh",
     "investigation_methods": {
         "ssm_documents": ssm_documents,
-        "aws_playbooks": aws_playbooks,
+        "playbooks": playbooks,
     },
 }
 

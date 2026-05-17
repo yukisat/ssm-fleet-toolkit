@@ -30,7 +30,7 @@ readonly/
 ## 設計
 
 - `metadata.yaml` は Document と同じ思想（safety: readonly, claude_hints 等）
-- `catalog.json` に `aws_playbooks` セクションとして統合
+- `catalog.json` に `playbooks` セクションとして統合
 - Claude がカテゴリ横断で適切な手段を選べる構造を目指す
 
 ## 共通規約
