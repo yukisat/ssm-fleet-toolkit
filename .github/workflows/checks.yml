@@ -97,3 +97,61 @@ jobs:
         run: pip install pyyaml
       - name: Run build-catalog.sh --check
         run: ./scripts/build-catalog.sh --check
+
+  document-content-scan:
+    name: Document content scan (no write commands)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Scan for forbidden write commands in readonly Documents
+        run: |
+          python3 - <<'PYEOF'
+          import sys, glob, re, yaml
+
+          # シェルの書き込み系コマンド（\b で単語境界）
+          WRITE_CMDS = re.compile(
+              r'\b(rm|mv|chmod|chown|systemctl|kill|dd|tee)\b'
+              r'|sed\s+-i'
+          )
+          # >> リダイレクト（ファイル追記書き込み）
+          REDIRECT = re.compile(r'>>')
+
+          errors = []
+          for path in sorted(glob.glob('documents/readonly/**/*.yaml', recursive=True)):
+              with open(path) as f:
+                  try:
+                      doc = yaml.safe_load(f)
+                  except yaml.YAMLError:
+                      continue  # yaml-syntax ジョブで検出済み
+
+              steps = (doc or {}).get('mainSteps', [])
+              for step in steps:
+                  inputs = step.get('inputs', {})
+                  commands = inputs.get('runCommand', [])
+                  for cmd_block in commands:
+                      for line in str(cmd_block).splitlines():
+                          stripped = line.strip()
+                          # コメント行・allow-write アノテーション行はスキップ
+                          if stripped.startswith('#'):
+                              continue
+                          if 'ssm-fleet:allow-write' in line:
+                              continue
+                          if WRITE_CMDS.search(line) or REDIRECT.search(line):
+                              errors.append(path + ': "' + stripped + '"')
+
+          if errors:
+              for e in errors:
+                  print('::error::' + e)
+              print()
+              print('readonly Document に書き込み系コマンドが含まれています。')
+              print('意図的な場合は該当行末尾に  # ssm-fleet:allow-write  を追記してください。')
+              sys.exit(1)
+          count = len(list(glob.glob('documents/readonly/**/*.yaml', recursive=True)))
+          print('OK: ' + str(count) + ' ファイルを検査しました。書き込み系コマンドは検出されませんでした。')
+          PYEOF
