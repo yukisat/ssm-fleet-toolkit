@@ -257,6 +257,8 @@ if playbooks_root.exists():
             "parameters": meta.get("parameters") or [],
             "estimated_runtime_seconds": meta.get("estimated_runtime_seconds"),
             "estimated_cost_usd": meta.get("estimated_cost_usd"),
+            "pagination": meta.get("pagination"),
+            "cost_controls": meta.get("cost_controls"),
         }
         aws_playbooks.append(entry)
 

@@ -36,6 +36,15 @@ output_schema:
       ssm_online: { type: boolean }
 estimated_runtime_seconds: 30  # 全リージョン横断時
 estimated_cost_usd: 0.00
+pagination:
+  ec2_describe_instances:
+    max_per_page: 1000
+    token_field: NextToken
+    note: CLI オートページネーション利用推奨（--no-paginate を付けない）
+  ssm_describe_instance_information:
+    max_per_page: 50
+    token_field: NextToken
+    note: 50 台超の環境では NextToken ループ必須。--page-size 50 を必ず指定
 claude_hints: |
   - state=running 以外は調査対象外として除外可能
   - ssm_online=false は SSM Document 実行不可、原因（IAM 不足 / agent 未起動）調査必要

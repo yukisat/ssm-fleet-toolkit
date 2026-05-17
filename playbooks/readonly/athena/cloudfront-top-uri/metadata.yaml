@@ -20,10 +20,21 @@ required_permissions:
   - s3:ListBucket
 
 required_resources:
-  athena_workgroup: primary  # または環境固有のワークグループ名
+  athena_workgroup: ssm-fleet-investigator  # 専用 WorkGroup（コスト上限付き）。primary は使わない
   athena_results_bucket: "*-athena-query-results*"
   glue_database: cloudfront_logs  # 利用者環境に合わせて変更
   glue_table: cf_access_log
+
+cost_controls:
+  workgroup:
+    name: ssm-fleet-investigator
+    bytes_scanned_cutoff_per_query: 10737418240  # 10 GiB
+    enforce_workgroup_configuration: true
+    result_encryption: SSE_S3
+    publish_cloudwatch_metrics: true
+  partition_pruning_required: true  # WHERE 句で year/month/day/hour 必須
+  dry_run_recommended: true          # 短期間で実績取得 → 本番外挿
+  pricing_basis: "$5 per TB scanned (2026-05 時点)"
 
 parameters:
   - name: distribution_id

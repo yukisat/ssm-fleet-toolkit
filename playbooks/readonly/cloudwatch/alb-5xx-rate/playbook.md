@@ -72,6 +72,24 @@ aws cloudwatch get-metric-data \
   --profile "$PROFILE"
 ```
 
+`get-metric-data` は 1 レスポンスあたり最大 100,800 datapoints / 約 1MB。期間と period の組み合わせで超える場合は `NextToken` が返るので必ずループする:
+
+```bash
+NEXT=""
+while :; do
+  RESP=$(aws cloudwatch get-metric-data \
+    --metric-data-queries "$QUERIES" \
+    --start-time "$TIME_FROM" --end-time "$TIME_TO" \
+    --profile "$PROFILE" \
+    ${NEXT:+--next-token "$NEXT"} --output json)
+  echo "$RESP" | jq '.MetricDataResults'
+  NEXT=$(echo "$RESP" | jq -r '.NextToken // empty')
+  [ -z "$NEXT" ] && break
+done
+```
+
+CLI のオートページネーションを使う場合は `--no-paginate` を付けない。
+
 ### 3. 結果の解釈
 
 `metadata.yaml` の `claude_hints` 参照:

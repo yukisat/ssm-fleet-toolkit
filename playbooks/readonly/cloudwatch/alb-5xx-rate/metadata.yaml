@@ -37,6 +37,13 @@ output_schema:
 estimated_runtime_seconds: 10
 estimated_cost_usd: 0.00  # GetMetricData は metric/datapoint 単位、通常無料枠内
 
+pagination:
+  cloudwatch_get_metric_data:
+    max_per_page: 100800  # datapoints
+    response_size_limit: ~1MB
+    token_field: NextToken
+    note: 長期間×短 period では NextToken ループ必須。CLI オートページネーション可
+
 claude_hints: |
   - elb_5xx と target_5xx の比率で原因切り分け
     - elb_5xx 多 → ALB 自体の問題（ターゲット未起動、容量不足）
