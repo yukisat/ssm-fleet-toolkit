@@ -12,6 +12,10 @@
 
 set -euo pipefail
 
+# shellcheck disable=SC1091  # _lib.sh は同階層、CI では -x 無しで実行されるため info を抑止
+source "$(dirname "$0")/_lib.sh"
+audit_setup "$@"
+
 PROFILE="${AWS_PROFILE:-default}"
 PERMISSION_SET_NAME="${PERMISSION_SET_NAME:-ClaudeInvestigator}"
 TF_STATE_BUCKET_PREFIX="${TF_STATE_BUCKET_PREFIX:-}"  # 呼び出し側から指定

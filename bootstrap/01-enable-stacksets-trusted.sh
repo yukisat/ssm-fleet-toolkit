@@ -9,6 +9,10 @@
 
 set -euo pipefail
 
+# shellcheck disable=SC1091  # _lib.sh は同階層、CI では -x 無しで実行されるため info を抑止
+source "$(dirname "$0")/_lib.sh"
+audit_setup "$@"
+
 PROFILE="${AWS_PROFILE:-default}"
 DRY_RUN=0
 while [[ $# -gt 0 ]]; do
@@ -26,12 +30,14 @@ echo "対象: AWS Organizations / Service: $SERVICE"
 if aws organizations list-aws-service-access-for-organization --profile "$PROFILE" --output text \
     --query "EnabledServicePrincipals[?ServicePrincipal=='$SERVICE'].ServicePrincipal" | grep -q "$SERVICE"; then
   echo "[SKIP] 既に有効化済みです"
+  audit_log "enable-aws-service-access" "skip" "already enabled: $SERVICE"
   exit 0
 fi
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
   echo "[DRY-RUN] 実行されるコマンド:"
   echo "  aws organizations enable-aws-service-access --service-principal $SERVICE --profile $PROFILE"
+  audit_log "enable-aws-service-access" "dry-run" "service=$SERVICE profile=$PROFILE"
   exit 0
 fi
 
@@ -40,3 +46,4 @@ aws organizations enable-aws-service-access \
   --service-principal "$SERVICE" \
   --profile "$PROFILE"
 echo "[OK] trusted access を有効化しました"
+audit_log "enable-aws-service-access" "ok" "service=$SERVICE profile=$PROFILE"

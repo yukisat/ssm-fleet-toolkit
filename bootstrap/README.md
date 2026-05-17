@@ -41,4 +41,20 @@
 
 ## 監査ログ
 
-すべてのスクリプトは `install-audit.log` に実行内容を追記する（呼び出し側スキルが管理）。
+すべてのスクリプトは先頭で `_lib.sh` を source し、`audit_setup "$@"` で監査ログ機構を初期化する。リポジトリルートの `install-audit.log` に以下フォーマットで追記される（`.gitignore` 除外済み）:
+
+```
+<ISO 8601 UTC>\t<script-name>\t<event>\t<result>\t<details>
+```
+
+- `event`: 開始 (`start`) / 終了 (`exit`) / 任意のアクション識別子
+- `result`: `ok` / `fail` / `skip` / `dry-run` / `info`
+- `details`: 自由記述
+
+`audit_setup` がスクリプト開始時と終了時（成功・失敗を自動判別）を自動記録する。スクリプト本体は重要なアクション直後に `audit_log <event> <result> [details]` を明示的に呼ぶ。
+
+ログを確認:
+
+```bash
+column -t -s $'\t' install-audit.log | tail
+```
