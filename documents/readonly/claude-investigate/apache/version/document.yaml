@@ -6,6 +6,7 @@ parameters:
     type: String
     description: Apache バイナリパス（httpd / apache2 / apachectl）。空なら自動探索
     default: ""
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: collectApacheVersion

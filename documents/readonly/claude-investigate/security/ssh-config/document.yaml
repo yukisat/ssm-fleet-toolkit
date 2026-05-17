@@ -8,6 +8,7 @@ parameters:
     type: String
     description: sshd_config パス
     default: /etc/ssh/sshd_config
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: collectSshConfig

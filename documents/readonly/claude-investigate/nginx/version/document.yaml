@@ -7,6 +7,7 @@ parameters:
     type: String
     default: /usr/sbin/nginx
     description: nginx バイナリのパス
+    allowedPattern: '^(/[A-Za-z0-9._-]+)*$'
 mainSteps:
   - action: aws:runShellScript
     name: collectNginxVersion
