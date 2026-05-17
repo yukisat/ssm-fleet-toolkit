@@ -1,0 +1,43 @@
+name: cost-monthly-by-service
+category: cost
+subcategory: explorer
+safety: readonly
+description: |
+  Cost Explorer で当月のサービス別コストを取得する。
+  コスト急増の原因サービス特定や、月次コスト確認に使う。
+required_permissions:
+  - ce:GetCostAndUsage
+parameters:
+  - name: profile
+    type: string
+    default: ""
+    description: AWS CLI プロファイル名（Cost Explorer はグローバル・us-east-1 固定）
+  - name: start_date
+    type: string
+    default: ""
+    description: "集計開始日 YYYY-MM-DD（空なら当月 1 日）"
+  - name: end_date
+    type: string
+    default: ""
+    description: "集計終了日 YYYY-MM-DD（空なら翌月 1 日）"
+output_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      service: { type: string }
+      cost_usd: { type: number }
+      unit: { type: string }
+estimated_runtime_seconds: 5
+estimated_cost_usd: 0.01  # Cost Explorer API は 1 リクエスト $0.01
+pagination:
+  note: Cost Explorer は通常 1 ページで全件返るが ResultsByTime でページネーションあり
+cost_controls:
+  ce_api_per_call: 0.01
+  note: Cost Explorer API は 1 リクエストあたり $0.01 の料金が発生する
+claude_hints: |
+  - Cost Explorer API は us-east-1 固定（--region us-east-1 必須）
+  - 1 リクエスト $0.01 のため、頻繁な呼び出しは避ける
+  - BlendedCost ではなく UnblendedCost が実際の請求に近い
+  - サポートプランや税金は "AWS Support (Developer)" 等のサービスとして現れる
+  - コストが突然増えたサービスは cost/forecast playbook と組み合わせて月末予測を確認

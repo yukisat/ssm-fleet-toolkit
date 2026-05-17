@@ -1,0 +1,34 @@
+name: inventory-resource-by-service
+category: inventory
+subcategory: account
+safety: readonly
+description: |
+  Resource Groups Tagging API でアカウント内の全リソースをサービス別にカウントする。
+  未使用アカウントの棚卸しや、想定外リソースの存在確認に使う。
+required_permissions:
+  - tag:GetResources
+parameters:
+  - name: region
+    type: string
+    required: true
+    description: 調査対象リージョン（例 ap-northeast-1）
+  - name: profile
+    type: string
+    default: ""
+    description: AWS CLI プロファイル名
+output_schema:
+  type: object
+  description: サービス名をキー、リソース数を値とした集計マップ
+  additionalProperties:
+    type: integer
+estimated_runtime_seconds: 30
+estimated_cost_usd: 0.00
+pagination:
+  get_resources:
+    max_per_page: 100
+    token_field: PaginationToken
+    note: PaginationToken が空になるまでループ必須
+claude_hints: |
+  - リソース数が 0 のアカウントは「完全未使用」候補
+  - EC2 / RDS / S3 / Lambda が多い場合は cost/monthly-by-service と組み合わせてコスト調査へ
+  - 全リージョン横断したい場合は ec2:DescribeRegions でリージョン一覧を取得してからループ
