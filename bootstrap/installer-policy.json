@@ -105,6 +105,31 @@
       ]
     },
     {
+      "Sid": "IAMForSSOProvisioning",
+      "Effect": "Allow",
+      "Action": [
+        "iam:AttachRolePolicy",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:DeleteRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:GetRole",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListRolePolicies",
+        "iam:PutRolePolicy",
+        "iam:UpdateRole",
+        "iam:UpdateRoleDescription",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:CreateServiceLinkedRole",
+        "iam:GetSAMLProvider",
+        "iam:UpdateSAMLProvider"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:role/aws-reserved/sso.amazonaws.com/*",
+        "arn:aws:iam::*:saml-provider/AWSSSO_*"
+      ]
+    },
+    {
       "Sid": "S3TerraformBackend",
       "Effect": "Allow",
       "Action": [

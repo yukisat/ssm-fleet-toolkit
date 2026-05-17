@@ -26,6 +26,7 @@
 | IdentityStoreReadOnly | identitystore の List/Describe/Get 系 | グループ ID 取得（書き込みなし） | `*` |
 | CloudFormationStackSets | StackSet の作成・更新・削除 | IAM ロール子アカウント配布 | `ssm-fleet-*` |
 | IAMManageSsmFleetRoles | IAM ロール・ポリシーの作成・更新 | StackSet 用 IAM 等 | `ssm-fleet-*` |
+| IAMForSSOProvisioning | iam:CreateRole, GetSAMLProvider 等 | SSO Account Assignment 作成時に SSO が裏で aws-reserved/sso.amazonaws.com/* ロール作成・AWSSSO_* SAML プロバイダ更新を行うため必要 | `aws-reserved/sso.amazonaws.com/*` / `saml-provider/AWSSSO_*` |
 | S3TerraformBackend | S3 バケット作成・操作 | Terraform state 用 | `*-ssm-fleet-tf-state*` |
 | DynamoDBTerraformLock | DynamoDB テーブル作成 | Terraform lock 用 | `ssm-fleet-tf-lock*` |
 | SSMDocumentManagement | CreateDocument, ModifyDocumentPermission 等 | Document 登録・共有 | `claude-investigate-*` |
