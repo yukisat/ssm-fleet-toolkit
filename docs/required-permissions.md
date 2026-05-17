@@ -21,7 +21,7 @@
 
 | Sid | アクション | 用途 | リソース |
 |---|---|---|---|
-| OrganizationsReadAndEnableTrustedAccess | DescribeOrganization, ListAccounts, EnableAWSServiceAccess 等 | StackSets trusted access 有効化、共有先取得 | `*` |
+| OrganizationsReadAndEnableTrustedAccess | DescribeOrganization, ListAccounts, ListRoots, EnableAWSServiceAccess 等 | StackSets trusted access 有効化、共有先取得、ルート OU 参照 | `*` |
 | SSOAdminManagePermissionSets | sso:* の個別アクション 23 個（書き込みあり） | Permission Set 作成・割り当て・タグ管理 | `*` |
 | IdentityStoreReadOnly | identitystore の List/Describe/Get 系 | グループ ID 取得（書き込みなし） | `*` |
 | CloudFormationStackSets | StackSet の作成・更新・削除 | IAM ロール子アカウント配布 | `ssm-fleet-*` |
