@@ -718,7 +718,7 @@
         "estimated_runtime_seconds": 10
       }
     ],
-    "aws_playbooks": [
+    "playbooks": [
       {
         "name": "athena-cloudfront-top-uri",
         "path": "playbooks/readonly/athena/cloudfront-top-uri",
