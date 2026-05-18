@@ -34,5 +34,7 @@ Thumbs.db
 *.key
 .envrc
 .env
-.env.local
+.env.*
+*.env
+!*.env.example
 secrets/

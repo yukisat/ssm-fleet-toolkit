@@ -6,7 +6,7 @@
 #   - 同名の SSM Document
 #   - 同名の S3 バケット
 #   - 同名の DynamoDB テーブル
-#   - 同名の IAM ロール
+#   （IAM ロールの衝突は StackSet デプロイ先アカウントで発生するため本 bootstrap の責務外）
 #
 # 衝突があれば終了コード 1 で終了
 
