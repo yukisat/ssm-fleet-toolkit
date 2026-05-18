@@ -183,12 +183,34 @@ S3 バケット + DynamoDB テーブルを委任管理アカウントに作成�
 調査スキル（`ssm-fleet-investigate`）を使うには、`ClaudeInvestigator` Permission Set で
 ログインできる AWS プロファイルをローカルに設定する必要がある。
 
-#### SSO ポータル URL の確認
+#### 9.5-A. 自分のユーザーを `investigators` グループに追加
+
+`ClaudeInvestigator` Permission Set は `investigators` グループに割り当てられている。
+グループにメンバーが追加されていないと、SSO ログイン時に `ClaudeInvestigator` が選択肢に表示されない。
+
+```bash
+# 自分の SSO ユーザー ID を確認
+aws identitystore list-users \
+  --identity-store-id <IDENTITY_STORE_ID> \
+  --query 'Users[*].[UserId,UserName]' \
+  --output table
+
+# investigators グループに追加（USER_ID は上の出力から）
+aws identitystore create-group-membership \
+  --identity-store-id <IDENTITY_STORE_ID> \
+  --group-id <INVESTIGATORS_GROUP_ID> \
+  --member-id MemberId={UserId="<USER_ID>"}
+```
+
+`<IDENTITY_STORE_ID>` と `<INVESTIGATORS_GROUP_ID>` は Terraform apply の出力または
+`deployments/<org>/terraform.tfvars` の設定値から確認する。
+
+#### 9.5-B. SSO ポータル URL の確認
 
 AWS コンソール → **IAM Identity Center** → 左メニュー「ダッシュボード」→
 「AWS アクセスポータル URL」をコピーする。
 
-#### プロファイルの設定
+#### 9.5-C. プロファイルの設定
 
 ```bash
 aws configure sso --profile claude-investigator
@@ -203,21 +225,33 @@ aws configure sso --profile claude-investigator
 | SSO region | `ap-northeast-1` |
 | SSO registration scopes | そのまま Enter |
 | アカウント | セットアップ対象アカウントを選択 |
-| Permission Set | `ClaudeInvestigator` |
+| Permission Set | **`ClaudeInvestigator`** |
 | Default region | `ap-northeast-1` |
 | Default output | `json` |
 
-#### ログインと動作確認
+#### 9.5-D. ロール選択の確認（重要）
+
+`aws configure sso` の実行中、Permission Set の選択肢に `ClaudeInvestigator` **以外**
+（例: `AdministratorAccess`）しか表示されない場合は **9.5-A のグループ追加が完了していない**。
+誤って別のロールを選択すると調査スキルが意図しない権限で動作するため、必ず確認すること。
+
+`ClaudeInvestigator` が表示されない場合の対処:
+1. 9.5-A を再確認してグループメンバーシップを確認する
+2. グループへの追加後、ブラウザの SSO セッションをクリアして再試行する
+3. `aws configure sso --profile claude-investigator` をやり直す
+
+#### 9.5-E. ログインと動作確認
 
 ```bash
 # ブラウザが開いて SSO 認証が完了する
 aws sso login --profile claude-investigator
 
-# 認証確認
+# 認証確認（RoleName に ClaudeInvestigator が含まれることを確認）
 aws sts get-caller-identity --profile claude-investigator
 ```
 
-`"AssumedRoleId"` に `ClaudeInvestigator` が含まれていれば成功。
+出力の `"AssumedRoleId"` または `"Arn"` に `ClaudeInvestigator` が含まれていれば成功。
+`AdministratorAccess` 等が含まれている場合はプロファイルを設定し直すこと。
 
 **注意**: このプロファイルが `ssm-fleet-investigate` スキルの実行に使われる。
 複数アカウントを調査する場合は `--profile` に異なるアカウント向けプロファイルを追加で作成すること。
