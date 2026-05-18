@@ -66,6 +66,16 @@ variable "max_concurrent_count" {
   default     = 5
 }
 
+variable "assumer_role_pattern" {
+  description = <<-EOT
+    AssumeRole を許可する IAM ロール ARN のパターン（glob、委任管理アカウント内のパス部分）。
+    SSO permission set 経由の場合は "aws-reserved/sso.amazonaws.com/AWSReservedSSO_<name>_*" 形式。
+    permission_set_name を変更した場合はこの変数も合わせて変更すること。
+  EOT
+  type    = string
+  default = "aws-reserved/sso.amazonaws.com/AWSReservedSSO_ClaudeInvestigator_*"
+}
+
 variable "tags" {
   description = "追加タグ"
   type        = map(string)

@@ -33,6 +33,10 @@ resource "aws_cloudformation_stack_set" "investigate_role" {
         Type    = "String"
         Default = var.role_name
       }
+      AssumerRolePattern = {
+        Type        = "String"
+        Description = "AssumeRole を許可する IAM ロール ARN のパターン（委任管理アカウント内のパス部分）"
+      }
     }
 
     Resources = {
@@ -51,6 +55,13 @@ resource "aws_cloudformation_stack_set" "investigate_role" {
                   }
                 }
                 Action = "sts:AssumeRole"
+                Condition = {
+                  ArnLike = {
+                    "aws:PrincipalArn" = {
+                      "Fn::Sub" = "arn:aws:iam::$${DelegatedAdminAccountId}:role/$${AssumerRolePattern}"
+                    }
+                  }
+                }
               }
             ]
           }
@@ -106,6 +117,7 @@ resource "aws_cloudformation_stack_set" "investigate_role" {
   parameters = {
     DelegatedAdminAccountId = var.delegated_admin_account_id
     RoleName                = var.role_name
+    AssumerRolePattern      = var.assumer_role_pattern
   }
 
   tags = merge(
