@@ -21,6 +21,7 @@ mainSteps:
         - |
           set -eu
           CONFIG="{{ ConfigFile }}"
+          LINES="{{ Lines }}"
           if [ -z "$CONFIG" ]; then CONFIG="/root/.my.cnf"; fi
           OPT=""
           if [ -f "$CONFIG" ]; then OPT="--defaults-file=$CONFIG"; fi
@@ -47,4 +48,4 @@ mainSteps:
             echo "ログファイルが見つかりません: $LOG_FILE"
             exit 0
           fi
-          tail -n {{ Lines }} "$LOG_FILE"
+          tail -n "$LINES" "$LOG_FILE"

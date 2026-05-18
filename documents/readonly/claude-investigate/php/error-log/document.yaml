@@ -25,6 +25,8 @@ mainSteps:
         - |
           set -eu
           LOG="{{ LogPath }}"
+          LINES="{{ Lines }}"
+          FILTER="{{ Filter }}"
           if [ -z "$LOG" ]; then
             for candidate in /var/log/php-fpm/error.log /var/log/php/error.log /var/log/php_errors.log /var/log/php-fpm.log; do
               if [ -f "$candidate" ]; then LOG="$candidate"; break; fi
@@ -37,8 +39,8 @@ mainSteps:
             exit 1
           fi
           echo "=== $LOG ==="
-          if [ -z '{{ Filter }}' ]; then
-            tail -n {{ Lines }} "$LOG"
+          if [ -z "$FILTER" ]; then
+            tail -n "$LINES" "$LOG"
           else
-            tail -n {{ Lines }} "$LOG" | grep -- '{{ Filter }}' || echo "(該当行なし)"
+            tail -n "$LINES" "$LOG" | grep -- "$FILTER" || echo "(該当行なし)"
           fi
