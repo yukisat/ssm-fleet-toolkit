@@ -31,14 +31,14 @@ fi
 TMP=$(mktemp "${TMPDIR:-/tmp}/ssm-fleet-catalog.XXXXXX")
 trap 'rm -f "$TMP"' EXIT
 
-python3 - <<'PYEOF' > "$TMP"
+python3 - "$REPO_ROOT" <<'PYEOF' > "$TMP"
 import json
 import os
 import re
 import sys
 from pathlib import Path
 
-repo_root = Path(os.environ.get("REPO_ROOT", "."))
+repo_root = Path(sys.argv[1])
 
 # PyYAML があれば使う、なければ簡易パーサで対応
 try:
