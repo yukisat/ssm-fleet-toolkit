@@ -31,7 +31,8 @@ mainSteps:
           fi
           ps -eo pid,user,pcpu,pmem,rss,etime,comm --sort=-${SORT_FIELD} | \
             awk -v top="$TOP_N" 'NR>1 && NR<=top+1 {
+              cmd=$7; gsub(/\\/, "\\\\", cmd); gsub(/"/, "\\\"", cmd)
               printf "%s{\"pid\":%d,\"user\":\"%s\",\"cpu_percent\":%.1f,\"mem_percent\":%.1f,\"rss_kb\":%d,\"elapsed\":\"%s\",\"command\":\"%s\"}",
-                (NR==2?"[":","), $1, $2, $3, $4, $5, $6, $7
+                (NR==2?"[":","), $1, $2, $3, $4, $5, $6, cmd
             }
             END { print "]" }'

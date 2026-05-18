@@ -12,7 +12,7 @@ mainSteps:
           set -eu
           read -r load1 load5 load15 _ < /proc/loadavg
           cores=$(nproc)
-          printf '{"load_1min":%.2f,"load_5min":%.2f,"load_15min":%.2f,"cores":%d,"load_per_core_1min":%.2f,"load_per_core_5min":%.2f}\n' \
-            "$load1" "$load5" "$load15" "$cores" \
-            "$(awk "BEGIN { print $load1 / $cores }")" \
-            "$(awk "BEGIN { print $load5 / $cores }")"
+          read -r per1 per5 <<<"$(awk -v l1="$load1" -v l5="$load5" -v c="$cores" \
+            'BEGIN { if (c>0) printf "%.2f %.2f\n", l1/c, l5/c; else print "null null" }')"
+          printf '{"load_1min":%.2f,"load_5min":%.2f,"load_15min":%.2f,"cores":%d,"load_per_core_1min":%s,"load_per_core_5min":%s}\n' \
+            "$load1" "$load5" "$load15" "$cores" "$per1" "$per5"
