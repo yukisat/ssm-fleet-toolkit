@@ -10,3 +10,7 @@ enable_ssm_investigation        = true
 # Claude が catalog から参照する。true / false は権限の有無だけを切り替える。
 enable_athena_investigation     = false
 enable_cloudwatch_investigation = false
+
+# BREAKING CHANGE: attach_aws_readonly のデフォルトが false に変更されました。
+# 既存環境で ReadOnlyAccess が付与されていた場合は、以下のコメントを外してください。
+# attach_aws_readonly = true

@@ -40,9 +40,13 @@ variable "include_cloudwatch" {
 }
 
 variable "attach_aws_readonly" {
-  description = "AWS managed policy ReadOnlyAccess を追加でアタッチするか"
-  type        = bool
-  default     = true
+  description = <<-EOT
+    AWS managed policy ReadOnlyAccess を追加でアタッチするか。
+    BREAKING CHANGE: デフォルトを false に変更。既存環境で明示的に true を指定していない場合、
+    terraform apply で ReadOnlyAccess が削除される。既存利用者は tfvars に attach_aws_readonly = true を追加すること。
+  EOT
+  type    = bool
+  default = false
 }
 
 variable "target_account_ids" {

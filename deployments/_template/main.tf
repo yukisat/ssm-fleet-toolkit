@@ -40,7 +40,7 @@ module "permission_set" {
   include_ssm         = var.enable_ssm_investigation
   include_athena      = var.enable_athena_investigation
   include_cloudwatch  = var.enable_cloudwatch_investigation
-  attach_aws_readonly = true
+  attach_aws_readonly = var.attach_aws_readonly
 
   target_account_ids = local.target_account_ids
   principal_id       = var.investigator_group_id

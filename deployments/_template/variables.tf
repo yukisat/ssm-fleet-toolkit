@@ -38,6 +38,15 @@ variable "enable_athena_investigation" {
   default     = false
 }
 
+variable "attach_aws_readonly" {
+  description = <<-EOT
+    AWS managed policy ReadOnlyAccess を Permission Set に追加するか（opt-in）。
+    BREAKING CHANGE: v0.x から移行した場合は明示的に true を指定すること。
+  EOT
+  type    = bool
+  default = false
+}
+
 variable "enable_cloudwatch_investigation" {
   description = <<-EOT
     CloudWatch 読み取り権限を Permission Set に含めるか。
