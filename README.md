@@ -10,7 +10,7 @@ AWS SSO + Organizations 統合環境向けに、AWS SSM Document と Claude Code
 - **AWS Identity Center (SSO)** 統合済み
 - 委任管理アカウントから Document を集約配信
 
-単一アカウント運用や Organizations 未利用環境は対象外。これらが必要な場合はフォークして別リポジトリで対応してください。
+単一アカウント運用や Organizations 未利用環境は [yukisat/ssm-fleet-toolkit-single](https://github.com/yukisat/ssm-fleet-toolkit-single) を使ってください。
 
 ## 何ができるか
 
