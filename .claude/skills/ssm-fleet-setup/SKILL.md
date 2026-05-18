@@ -240,6 +240,24 @@ aws configure sso --profile claude-investigator
 2. グループへの追加後、ブラウザの SSO セッションをクリアして再試行する
 3. `aws configure sso --profile claude-investigator` をやり直す
 
+グループ追加済み・Assignment 確認済みでも表示されない場合は **Permission Set のプロビジョニングラグ**が原因の可能性がある（Identity Center の反映に数分かかることがある）。その場合は `~/.aws/config` を手動で編集して回避する:
+
+```ini
+[profile claude-investigator]
+sso_session = ssm-fleet
+sso_account_id = <ACCOUNT_ID>
+sso_role_name = ClaudeInvestigator
+region = ap-northeast-1
+output = json
+
+[sso-session ssm-fleet]
+sso_start_url = https://<YOUR_SSO_URL>.awsapps.com/start
+sso_region = ap-northeast-1
+sso_registration_scopes = sso:account:access
+```
+
+編集後に `aws sso login --profile claude-investigator` を実行する。
+
 #### 9.5-E. ログインと動作確認
 
 ```bash
@@ -261,6 +279,27 @@ aws sts get-caller-identity --profile claude-investigator
 - 作成されたリソース一覧
 - 監査ログのパス（`install-audit.log`）
 - 次にできること（`/ssm-fleet-investigate` の使い方）
+- **調査スキルを使うメンバー全員に以下を案内する**:
+
+```
+調査スキルを使うには、自分のアカウントを investigators グループに追加する必要があります。
+管理者権限で以下を実行してください:
+
+# 自分の UserId を確認
+aws identitystore list-users \
+  --identity-store-id <IDENTITY_STORE_ID> \
+  --query 'Users[*].[UserId,UserName]' \
+  --output table
+
+# investigators グループに追加
+aws identitystore create-group-membership \
+  --identity-store-id <IDENTITY_STORE_ID> \
+  --group-id <INVESTIGATORS_GROUP_ID> \
+  --member-id MemberId={UserId="<USER_ID>"}
+
+追加後、SKILL.md の Step 9.5 を参照してプロファイルを設定してください。
+```
+
 - インストーラ権限の削除推奨（`ssm-fleet-installer` IAM ユーザーは Step 1 で作成したもの）。利用者に以下の削除手順を提示:
 
 ```bash
