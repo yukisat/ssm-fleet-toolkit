@@ -6,7 +6,7 @@ parameters:
   Lines:
     type: String
     default: "100"
-    allowedPattern: "^[0-9]+$"
+    allowedPattern: "^[1-9][0-9]{0,3}$"
   ConfigFile:
     type: String
     default: ""
@@ -27,20 +27,21 @@ mainSteps:
           if [ -f "$CONFIG" ]; then OPT="--defaults-file=$CONFIG"; fi
 
           echo "=== スロークエリ設定確認 ==="
-          mysql $OPT -N -e "SHOW VARIABLES LIKE 'slow%';" 2>/dev/null || {
+          SLOW_VARS=$(mysql $OPT -N -e "SHOW VARIABLES LIKE 'slow%';" 2>/dev/null) || {
             echo "MySQL に接続できません（認証情報が必要）" >&2
             exit 1
           }
+          echo "$SLOW_VARS"
           echo
 
-          SLOW_LOG=$(mysql $OPT -N -e "SHOW VARIABLES LIKE 'slow_query_log';" 2>/dev/null | awk '{print $2}')
+          SLOW_LOG=$(echo "$SLOW_VARS" | awk '/^slow_query_log\t/ {print $2}')
           if [ "$SLOW_LOG" != "ON" ]; then
             echo "スロークエリログが無効です (slow_query_log = $SLOW_LOG)"
             echo "有効化: SET GLOBAL slow_query_log = ON; SET GLOBAL long_query_time = 1;"
             exit 0
           fi
 
-          LOG_FILE=$(mysql $OPT -N -e "SHOW VARIABLES LIKE 'slow_query_log_file';" 2>/dev/null | awk '{print $2}')
+          LOG_FILE=$(echo "$SLOW_VARS" | awk '/^slow_query_log_file\t/ {print $2}')
           [ -z "$LOG_FILE" ] && LOG_FILE="/var/log/mysql/mysql-slow.log"
 
           echo "=== スロークエリログ: $LOG_FILE ==="
