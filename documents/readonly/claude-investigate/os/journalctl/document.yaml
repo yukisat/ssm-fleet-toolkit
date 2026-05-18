@@ -48,8 +48,8 @@ mainSteps:
             exit 1
           fi
 
-          cmd="journalctl --no-pager -n $LINES -p $PRIORITY --since \"$SINCE\""
           if [ -n "$UNIT" ]; then
-            cmd="$cmd -u $UNIT"
+            journalctl --no-pager -n "$LINES" -p "$PRIORITY" --since "$SINCE" -u "$UNIT"
+          else
+            journalctl --no-pager -n "$LINES" -p "$PRIORITY" --since "$SINCE"
           fi
-          eval "$cmd"
