@@ -178,6 +178,50 @@ S3 バケット + DynamoDB テーブルを委任管理アカウントに作成�
 テストインスタンスに対して `claude-investigate-os-disk-usage` を実行し、
 正常応答が返ることを確認。
 
+### Step 9.5: ローカル PC の SSO プロファイル設定
+
+調査スキル（`ssm-fleet-investigate`）を使うには、`ClaudeInvestigator` Permission Set で
+ログインできる AWS プロファイルをローカルに設定する必要がある。
+
+#### SSO ポータル URL の確認
+
+AWS コンソール → **IAM Identity Center** → 左メニュー「ダッシュボード」→
+「AWS アクセスポータル URL」をコピーする。
+
+#### プロファイルの設定
+
+```bash
+aws configure sso --profile claude-investigator
+```
+
+対話形式で以下を入力:
+
+| 項目 | 値 |
+|---|---|
+| SSO session name | `ssm-fleet`（任意） |
+| SSO start URL | IAM Identity Center のアクセスポータル URL |
+| SSO region | `ap-northeast-1` |
+| SSO registration scopes | そのまま Enter |
+| アカウント | セットアップ対象アカウントを選択 |
+| Permission Set | `ClaudeInvestigator` |
+| Default region | `ap-northeast-1` |
+| Default output | `json` |
+
+#### ログインと動作確認
+
+```bash
+# ブラウザが開いて SSO 認証が完了する
+aws sso login --profile claude-investigator
+
+# 認証確認
+aws sts get-caller-identity --profile claude-investigator
+```
+
+`"AssumedRoleId"` に `ClaudeInvestigator` が含まれていれば成功。
+
+**注意**: このプロファイルが `ssm-fleet-investigate` スキルの実行に使われる。
+複数アカウントを調査する場合は `--profile` に異なるアカウント向けプロファイルを追加で作成すること。
+
 ### Step 10: 完了報告
 
 - 作成されたリソース一覧
