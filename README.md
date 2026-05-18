@@ -20,15 +20,51 @@ AWS SSO + Organizations 統合環境向けに、AWS SSM Document と Claude Code
 - SSO Permission Set による調査用権限の最小化配布
 - 既存 AWS 環境を一切壊さず後から追加可能
 
-## 導入方法
+## セットアップ（導入担当者向け）
 
-Claude Code から導入する想定:
+AWS 環境への初回導入。Organizations / SSO / Terraform の設定を行う。**管理権限を持つ担当者が一度だけ実施する。**
 
-1. このリポジトリを GitHub の "Use this template" で複製、または `git clone`
-2. clone 先で Claude Code を起動
-3. 「ssm-fleet-toolkit をセットアップして」と伝える
+```bash
+git clone https://github.com/yukisat/ssm-fleet-toolkit.git
+cd ssm-fleet-toolkit
+claude  # Claude Code を起動
+```
 
-セットアップスキルが対話的に環境を判定し、必要な作業を実行する。利用者が AWS CLI や Terraform コマンドを直接叩く必要はない。
+Claude Code が起動したら:
+
+```
+ssm-fleet-toolkit をセットアップして
+```
+
+セットアップスキルが対話的に環境を判定し、必要な作業を順番に案内する。AWS CLI や Terraform コマンドを直接叩く必要はない。完了まで約 30〜60 分。
+
+## 調査の開始（利用者向け）
+
+セットアップ完了後、調査を行うメンバーは以下の手順で開始する。
+
+```bash
+git clone https://github.com/yukisat/ssm-fleet-toolkit.git
+cd ssm-fleet-toolkit
+claude  # Claude Code を起動
+```
+
+Claude Code が起動したら:
+
+```
+ssm-fleet-investigate を使いたい
+```
+
+または調査したい内容をそのまま伝える:
+
+```
+a-1234 のディスク使用量を確認して
+```
+
+```
+本番アカウントの当月コストをサービス別に出して
+```
+
+スキルが catalog から適切な調査手段を選んで実行する。
 
 ## 安心設計
 
