@@ -70,6 +70,10 @@ estimated_runtime_seconds: 30
 estimated_cost_usd: 0.01  # Athena スキャン料金の目安、データ量で増減
 
 claude_hints: |
+  - 【最重要】Athena・結果バケット・WorkGroup は CF ログ出力先 S3 バケットと同じリージョンで実行する。
+    Athena は同一リージョンの S3 しか参照できない。実行前に必ずログ出力先バケットのリージョンを確認すること
+    （aws cloudfront get-distribution-config の Logging.Bucket → aws s3api get-bucket-location）。
+    権限上の許可リージョンは ap-northeast-1 / us-west-2。
   - 上位 URI が一つだけ突出していたら DDoS や bot 巡回を疑う
   - distinct_clients が極端に少ない（数 IP）なら特定ソースからの攻撃の可能性
   - 404 が上位の場合は設定ミスや欠損コンテンツを疑う

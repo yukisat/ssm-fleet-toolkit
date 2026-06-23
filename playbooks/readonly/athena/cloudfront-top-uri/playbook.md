@@ -41,6 +41,27 @@ CloudFront アクセスログから期間内の Top URI を集計し、異常な
 - 集計期間（時間範囲を短く保つことでコスト抑制）
 - Glue データベース・テーブル名（環境固有）
 
+### 1.5 Athena リージョンの決定（最重要・必ず先に行う）
+
+**Athena は「クエリを実行するリージョン」にある S3 データしか参照できない。**
+よって、Athena・結果バケット・WorkGroup はすべて **CloudFront ログを出力している S3 バケットと同じリージョン**に揃える必要がある。リージョンを取り違えるとテーブルが見つからない・データを読めない。
+
+ログ出力先バケットのリージョンを必ず先に確認し、`REGION` をそれに合わせること。
+
+```bash
+# CloudFront ディストリビューションのログ出力先バケットを確認
+LOG_BUCKET=$(aws cloudfront get-distribution-config --id "$DIST_ID" \
+  --query 'DistributionConfig.Logging.Bucket' --output text --profile <profile> | sed 's/\.s3\..*//')
+# そのバケットのリージョンを取得（us-east-1 は "None"/空で返る）
+REGION=$(aws s3api get-bucket-location --bucket "$LOG_BUCKET" \
+  --query 'LocationConstraint' --output text --profile <profile>)
+[ "$REGION" = "None" ] && REGION=us-east-1
+echo "Athena 実行リージョン: $REGION"
+```
+
+以降のバケット作成・WorkGroup 作成・クエリ実行はすべて `--region "$REGION"` で揃える
+（権限上の許可リージョンは ap-northeast-1 / us-west-2）。
+
 ### 2. クエリ準備
 
 `query.sql` のプレースホルダを実値に置換:
@@ -62,11 +83,11 @@ sed -e "s/{DATABASE}/$DATABASE/g" \
 
 ```bash
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --profile <profile>)
-REGION=ap-northeast-1   # athena_regions に含まれるリージョンのみ
+# REGION は手順 1.5 で決定した「CF ログ出力先バケットと同じリージョン」を使う
 BUCKET="ssm-fleet-athena-results-${ACCOUNT_ID}-${REGION}"
 
 # 既存確認 → 無ければ作成（暗号化・パブリックアクセスブロックも設定）
-if ! aws s3api head-bucket --bucket "$BUCKET" --profile <profile> 2>/dev/null; then
+if ! aws s3api head-bucket --bucket "$BUCKET" --region "$REGION" --profile <profile> 2>/dev/null; then
   aws s3api create-bucket --bucket "$BUCKET" --region "$REGION" \
     --create-bucket-configuration LocationConstraint="$REGION" --profile <profile>
   aws s3api put-public-access-block --bucket "$BUCKET" --profile <profile> \
@@ -83,12 +104,16 @@ fi
 
 ### 3. 専用 WorkGroup 経由でクエリ実行（コスト制御の中核）
 
+**以降のすべての `aws athena` コマンドに `--region "$REGION"`（手順 1.5 で決定した値）を付けること。**
+クエリ ID もリージョン単位で管理されるため、start / get すべて同じリージョンで実行する。
+
 `primary` WorkGroup は直接使わない。スキャン量上限を設定した専用 WorkGroup `ssm-fleet-investigator` を使う:
 
 ```bash
 WORKGROUP="ssm-fleet-investigator"
 
 QUERY_ID=$(aws athena start-query-execution \
+  --region "$REGION" \
   --query-string "$(cat /tmp/query.sql)" \
   --work-group "$WORKGROUP" \
   --query QueryExecutionId --output text \
@@ -101,6 +126,7 @@ WorkGroup `ssm-fleet-investigator` が無ければ作成する（OutputLocation 
 
 ```bash
 aws athena create-work-group \
+  --region "$REGION" \
   --name ssm-fleet-investigator \
   --configuration "{
     \"ResultConfiguration\": {
