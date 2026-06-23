@@ -43,7 +43,7 @@
         "arn:aws:s3:::${results_bucket_prefix}-*"
       ],
       "Condition": {
-        "StringEquals": {
+        "StringEqualsIfExists": {
           "s3:LocationConstraint": ${jsonencode(athena_regions)}
         }
       }

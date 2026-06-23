@@ -104,7 +104,7 @@ CloudFront ログ解析、CloudWatch メトリクス取得等。利用者の判�
 |---|---|---|---|
 | AthenaQueryExecution | athena:StartQueryExecution, StopQueryExecution | `workgroup/<workgroup_name>` | `aws:RequestedRegion` ∈ athena_regions |
 | AthenaWorkGroupCreate | athena:CreateWorkGroup, TagResource | `workgroup/<workgroup_name>` | `aws:RequestedRegion` ∈ athena_regions |
-| AthenaResultsBucketCreate | s3:CreateBucket | `<prefix>-*` | `s3:LocationConstraint` ∈ athena_regions |
+| AthenaResultsBucketCreate | s3:CreateBucket | `<prefix>-*` | `s3:LocationConstraint` ∈ athena_regions（`StringEqualsIfExists`） |
 | AthenaResultsBucketManage | s3:PutBucketPublicAccessBlock, PutEncryptionConfiguration, PutBucketTagging, PutObject, AbortMultipartUpload, GetObject, ListBucket, GetBucketLocation | `<prefix>-*` | `aws:RequestedRegion` ∈ athena_regions |
 
 設計のポイント:
@@ -117,9 +117,10 @@ CloudFront ログ解析、CloudWatch メトリクス取得等。利用者の判�
   WorkGroup `<workgroup_name>`（既定 `ssm-fleet-investigator`）に Resource 限定。primary 等の他 WorkGroup では実行不可。
 - **作成も許可**: 結果バケット・WorkGroup が無い場合は調査ロール自身が当該リージョンに作成できる
   （いずれも専用名＋許可リージョンに限定）。
-- **CreateBucket のリージョン条件は s3:LocationConstraint**: S3 CreateBucket はグローバルエンドポイント
-  経由で `aws:RequestedRegion` が常に us-east-1 になるため、作成リージョン限定には `s3:LocationConstraint`
-  を使う。us-east-1 は LocationConstraint が空で一致しない点に注意（modules/sso-permission-set/variables.tf の athena_regions 参照）。
+- **CreateBucket のリージョン条件は s3:LocationConstraint（StringEqualsIfExists）**: S3 CreateBucket はグローバルエンドポイント
+  経由で `aws:RequestedRegion` が常に us-east-1 になるため、作成リージョン限定には `s3:LocationConstraint` を使う。
+  us-east-1 は LocationConstraint ヘッダーが存在しないため `StringEqualsIfExists` で条件キーが無い場合もパスさせる
+  （他のリージョンは必ず LocationConstraint を送るため引き続き制限される）。
 - **取得系・Glue は ReadOnlyAccess 側**: athena:Get*/List*、glue:Get*、結果以外の s3:Get*/List* は
   `attach_aws_readonly = true` の ReadOnlyAccess でカバーするため inline policy には含めない（最小化）。
 

@@ -17,9 +17,14 @@ terraform {
   # }
 }
 
+locals {
+  # aws_profile が空文字のとき null にして標準クレデンシャルチェーン（env vars 等）を使う
+  aws_profile = var.aws_profile != "" ? var.aws_profile : null
+}
+
 provider "aws" {
   region  = var.primary_region
-  profile = var.aws_profile != "" ? var.aws_profile : null
+  profile = local.aws_profile
 }
 
 # SSO / IAM Identity Center 操作用 provider。
@@ -29,7 +34,7 @@ provider "aws" {
 provider "aws" {
   alias   = "sso"
   region  = var.sso_region
-  profile = var.aws_profile != "" ? var.aws_profile : null
+  profile = local.aws_profile
 }
 
 # ---------------------------------------------------------------------------
@@ -49,31 +54,31 @@ provider "aws" {
 provider "aws" {
   alias   = "us_west_2"
   region  = "us-west-2"
-  profile = var.aws_profile != "" ? var.aws_profile : null
+  profile = local.aws_profile
 }
 
 provider "aws" {
   alias   = "us_east_1"
   region  = "us-east-1"
-  profile = var.aws_profile != "" ? var.aws_profile : null
+  profile = local.aws_profile
 }
 
 provider "aws" {
   alias   = "ap_southeast_1"
   region  = "ap-southeast-1"
-  profile = var.aws_profile != "" ? var.aws_profile : null
+  profile = local.aws_profile
 }
 
 provider "aws" {
   alias   = "ap_northeast_3"
   region  = "ap-northeast-3"
-  profile = var.aws_profile != "" ? var.aws_profile : null
+  profile = local.aws_profile
 }
 
 provider "aws" {
   alias   = "eu_west_1"
   region  = "eu-west-1"
-  profile = var.aws_profile != "" ? var.aws_profile : null
+  profile = local.aws_profile
 }
 
 # Organizations の全アカウントを取得
