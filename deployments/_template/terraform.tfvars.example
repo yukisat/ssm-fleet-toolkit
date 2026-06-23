@@ -3,6 +3,11 @@ primary_region        = "ap-northeast-1"
 permission_set_name   = "ClaudeInvestigator"
 investigator_group_id = "<paste IdentityStore Group ID here>"
 
+# SSM Document を primary_region 以外にも展開する場合に指定（リージョンごとに登録が必要）。
+# 例: us-west-2 にも調査対象インスタンスがある場合は ["us-west-2"]。
+# 指定できるのは main.tf に provider 定義済みのリージョンのみ。
+document_regions = []
+
 enable_ssm_investigation        = true
 
 # 以下 2 つは Permission Set に inline policy を追加するだけ。

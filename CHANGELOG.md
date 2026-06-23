@@ -5,6 +5,20 @@ Semantic Versioning 風: MAJOR.MINOR.PATCH（破壊的変更 / 機能追加 / �
 
 ## [Unreleased]
 
+### Added
+
+- Athena 権限を最小化し、専用結果バケットの作成に対応
+  - inline policy をテンプレート化（`claude-investigator-athena.json.tftpl`）し、許可リージョンを
+    `athena_regions`（= `primary_region` + `document_regions`）から自動生成（ベタ書き廃止）
+  - 結果バケットは toolkit 専用名 `ssm-fleet-athena-results-*` のみ作成・利用可能に限定
+    （`s3:CreateBucket` 等を当該プレフィックス＋許可リージョンに絞り、既存任意バケットは使わせない）
+  - 取得系・Glue 読み取りは `ReadOnlyAccess` に委ね、inline policy からは除外して最小化
+- SSM Document のマルチリージョン展開に対応（`document_regions` 変数）
+  - `deployments/_template` に primary_region 以外へ Document を登録する仕組みを追加
+  - opt-in リスト（例 `["us-west-2"]`）で必要なリージョンにだけ `claude-investigate-*` を登録・共有
+  - primary の `module.doc` は不変のため既存リージョンの Document には影響しない
+  - provider は Terraform の制約上リージョンごとに明示定義（us-west-2 / us-east-1 / ap-southeast-1 / ap-northeast-3 / eu-west-1 を同梱、追加は main.tf に provider + module を足す）
+
 ### Playbook hardening (AWS ベストプラクティス反映)
 
 - ページネーション規約を `playbooks/README.md` に明文化

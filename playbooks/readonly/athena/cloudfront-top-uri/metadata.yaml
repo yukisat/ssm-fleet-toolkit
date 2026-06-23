@@ -18,10 +18,11 @@ required_permissions:
   - s3:GetObject
   - s3:PutObject
   - s3:ListBucket
+  - s3:CreateBucket  # 結果バケットが無い場合に作成（ssm-fleet-athena-results-* に限定）
 
 required_resources:
   athena_workgroup: ssm-fleet-investigator  # 専用 WorkGroup（コスト上限付き）。primary は使わない
-  athena_results_bucket: "*-athena-query-results*"
+  athena_results_bucket: "ssm-fleet-athena-results-<account>-<region>"  # 専用名。無ければ調査ロールが作成
   glue_database: cloudfront_logs  # 利用者環境に合わせて変更
   glue_table: cf_access_log
 

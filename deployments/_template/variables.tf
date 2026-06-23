@@ -15,6 +15,31 @@ variable "permission_set_name" {
   default     = "ClaudeInvestigator"
 }
 
+variable "document_regions" {
+  description = <<-EOT
+    SSM Document を primary_region に加えて展開するセカンダリリージョンのリスト。
+    調査対象インスタンスが primary 以外のリージョンにもある場合に指定する。
+    例: ["us-west-2"]
+
+    SSM Document はリージョンごとに登録が必要なため、ここに挙げたリージョンへ
+    primary と同じ claude-investigate-* Document を登録・共有する。
+    primary_region はここに含めなくてよい（常に登録される）。
+
+    指定できるのは main.tf に provider が定義済みのリージョンのみ。
+    新しいリージョンを足す場合は main.tf に provider と module ブロックを追加すること。
+  EOT
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for r in var.document_regions :
+      contains(["us-west-2", "us-east-1", "ap-southeast-1", "ap-northeast-3", "eu-west-1"], r)
+    ])
+    error_message = "document_regions に指定できるのは main.tf に provider 定義済みのリージョンのみです（us-west-2 / us-east-1 / ap-southeast-1 / ap-northeast-3 / eu-west-1）。他のリージョンを使う場合は main.tf に provider と module ブロックを追加してください。"
+  }
+}
+
 variable "investigator_group_id" {
   description = "Permission Set を割り当てる IdentityStore グループ ID"
   type        = string
@@ -43,8 +68,8 @@ variable "attach_aws_readonly" {
     AWS managed policy ReadOnlyAccess を Permission Set に追加するか（opt-in）。
     BREAKING CHANGE: v0.x から移行した場合は明示的に true を指定すること。
   EOT
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "enable_cloudwatch_investigation" {

@@ -97,13 +97,28 @@ CloudFront ログ解析、CloudWatch メトリクス取得等。利用者の判�
 
 ### Athena（CloudFront ログ等の解析）
 
-完全な JSON: `modules/sso-permission-set/policies/claude-investigator-athena.json`
+テンプレート: `modules/sso-permission-set/policies/claude-investigator-athena.json.tftpl`
+（`athena_regions` と `athena_results_bucket_prefix` を展開して生成）
 
-| Sid | アクション | リソース |
-|---|---|---|
-| AthenaQueryExecution | StartQueryExecution, StopQueryExecution, GetQueryExecution, GetQueryResults 等 | `*` |
-| AthenaResultsBucket | s3:PutObject, GetObject, ListBucket 等 | `*-athena-query-results*` |
-| GlueCatalogForAthena | glue:GetTable, GetDatabase, GetPartitions 等 | `*` |
+| Sid | アクション | リソース | 条件 |
+|---|---|---|---|
+| AthenaQueryExecution | athena:StartQueryExecution, StopQueryExecution | `*` | `aws:RequestedRegion` ∈ athena_regions |
+| AthenaResultsBucketCreate | s3:CreateBucket, PutBucketPublicAccessBlock, PutEncryptionConfiguration, PutBucketTagging | `<prefix>-*` | `aws:RequestedRegion` ∈ athena_regions |
+| AthenaResultsBucketUse | s3:PutObject, AbortMultipartUpload, GetObject, ListBucket, GetBucketLocation | `<prefix>-*` | — |
+
+設計のポイント:
+
+- **リージョン限定**: `athena_regions`（= `primary_region` + `document_regions`）以外のリージョンでは
+  Athena 実行も結果バケット作成もできない。
+- **専用バケットのみ**: 結果バケットは toolkit 専用名 `<prefix>-*`（既定 prefix = `ssm-fleet-athena-results`）
+  のみ作成・利用可能。お客様環境の既存バケットは使わせない。
+- **作成も許可**: 結果バケットが無い場合は調査ロール自身が当該リージョンに作成できる
+  （CreateBucket は専用 prefix ＋許可リージョンに限定）。
+- **取得系・Glue は ReadOnlyAccess 側**: athena:Get*/List*、glue:Get*、結果以外の s3:Get*/List* は
+  `attach_aws_readonly = true` の ReadOnlyAccess でカバーするため inline policy には含めない（最小化）。
+
+結果バケットの命名規約（調査スキル／playbook 側で使用）: `<prefix>-<アカウントID>-<リージョン>`
+例: `ssm-fleet-athena-results-123456789012-ap-northeast-1`
 
 ### CloudWatch（メトリクス・ログ）
 
