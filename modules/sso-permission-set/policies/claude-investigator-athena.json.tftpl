@@ -1,0 +1,75 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AthenaQueryExecution",
+      "Effect": "Allow",
+      "Action": [
+        "athena:StartQueryExecution",
+        "athena:StopQueryExecution"
+      ],
+      "Resource": [
+        "arn:aws:athena:*:*:workgroup/${workgroup_name}"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": ${jsonencode(athena_regions)}
+        }
+      }
+    },
+    {
+      "Sid": "AthenaWorkGroupCreate",
+      "Effect": "Allow",
+      "Action": [
+        "athena:CreateWorkGroup",
+        "athena:TagResource"
+      ],
+      "Resource": [
+        "arn:aws:athena:*:*:workgroup/${workgroup_name}"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": ${jsonencode(athena_regions)}
+        }
+      }
+    },
+    {
+      "Sid": "AthenaResultsBucketCreate",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${results_bucket_prefix}-*"
+      ],
+      "Condition": {
+        "StringEqualsIfExists": {
+          "s3:LocationConstraint": ${jsonencode(athena_regions)}
+        }
+      }
+    },
+    {
+      "Sid": "AthenaResultsBucketManage",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutEncryptionConfiguration",
+        "s3:PutBucketTagging",
+        "s3:PutObject",
+        "s3:AbortMultipartUpload",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${results_bucket_prefix}-*",
+        "arn:aws:s3:::${results_bucket_prefix}-*/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": ${jsonencode(athena_regions)}
+        }
+      }
+    }
+  ]
+}

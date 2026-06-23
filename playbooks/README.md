@@ -43,6 +43,16 @@ AWS API は 1 レスポンスの件数 / サイズに上限があり、超過時
 - `--page-size` をデフォルト値より大きく指定してリクエスト回数を減らす（例: `aws ssm describe-instance-information --page-size 50`、`aws ec2 describe-instances --max-results 1000`）
 - `metadata.yaml` の `pagination` フィールドに API ごとの上限・トークンフィールド名を記載
 
+### Athena のリージョン整合（S3 と同一リージョンで実行）
+
+**Athena は「クエリを実行するリージョン」にある S3 データしか参照できない。**
+S3 上のログ（CloudFront ログ等）を分析するときは、**対象データを置いている S3 バケットのリージョンを必ず先に確認し、Athena・結果バケット・WorkGroup をすべてそのリージョンに揃えて実行する**こと。リージョンを取り違えるとテーブルが見つからない・データを読めない。
+
+- 実行前にバケットのリージョンを確認する: `aws s3api get-bucket-location --bucket <bucket>`（`us-east-1` は `None`/空で返る）
+- CloudFront ログの場合: `aws cloudfront get-distribution-config --id <dist> --query 'DistributionConfig.Logging.Bucket'` で出力先を特定 → 上記でリージョン確認
+- 以降の `aws athena` / `aws s3api` コマンドはすべて `--region <そのリージョン>` で揃える
+- 許可リージョン（権限上 Athena 実行・結果バケット作成が可能）: **ap-northeast-1 / us-west-2**
+
 ### Athena コスト制御
 
 Athena はスキャンしたデータ量で課金される（$5/TB）。誤った WHERE 句や partition 指定漏れで暴走しないよう、**多層防御**を必須とする:

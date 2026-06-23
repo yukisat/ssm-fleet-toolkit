@@ -8,21 +8,37 @@ terraform {
   }
 }
 
+# このモジュールは「渡された aws provider のリージョン」で SSO / IAM Identity Center を
+# 操作する。IAM Identity Center はホームリージョンでしか
+# 参照できないため、呼び出し側は必ず Identity Center のリージョンを向いた provider を
+# 渡すこと（deployments 側で providers = { aws = aws.sso } を指定している）。
+# primary_region 等の別リージョン provider を渡すと data.aws_ssoadmin_instances が
+# 空になり plan が失敗する。
 data "aws_ssoadmin_instances" "this" {}
 
 locals {
   instance_arn      = data.aws_ssoadmin_instances.this.arns[0]
   identity_store_id = data.aws_ssoadmin_instances.this.identity_store_ids[0]
 
-  # 機能フラグごとに inline policy JSON を合成
-  policy_files = compact([
-    var.include_ssm ? "${path.module}/policies/claude-investigator-ssm.json" : "",
-    var.include_athena ? "${path.module}/policies/claude-investigator-athena.json" : "",
-    var.include_cloudwatch ? "${path.module}/policies/claude-investigator-cloudwatch.json" : "",
-  ])
+  # 機能フラグごとに inline policy の Statement を合成。
+  # athena だけはリージョン条件・結果バケットプレフィックスを埋め込むためテンプレート展開する。
+  # 無効な機能は null にして flatten 時に除外する（Statement ごとに属性が異なるため
+  # list 化できず、tuple のまま flatten でまとめる）。
+  ssm_statements = var.include_ssm ? jsondecode(file("${path.module}/policies/claude-investigator-ssm.json")).Statement : null
+
+  athena_statements = var.include_athena ? jsondecode(templatefile(
+    "${path.module}/policies/claude-investigator-athena.json.tftpl",
+    {
+      athena_regions        = var.athena_regions
+      results_bucket_prefix = var.athena_results_bucket_prefix
+      workgroup_name        = var.athena_workgroup_name
+    }
+  )).Statement : null
+
+  cloudwatch_statements = var.include_cloudwatch ? jsondecode(file("${path.module}/policies/claude-investigator-cloudwatch.json")).Statement : null
 
   combined_statements = flatten([
-    for f in local.policy_files : jsondecode(file(f)).Statement
+    for d in [local.ssm_statements, local.athena_statements, local.cloudwatch_statements] : d if d != null
   ])
 
   combined_policy = jsonencode({
@@ -54,11 +70,21 @@ resource "aws_ssoadmin_managed_policy_attachment" "readonly" {
 }
 
 resource "aws_ssoadmin_permission_set_inline_policy" "this" {
-  count = length(local.policy_files) > 0 ? 1 : 0
+  count = length(local.combined_statements) > 0 ? 1 : 0
 
   instance_arn       = local.instance_arn
   permission_set_arn = aws_ssoadmin_permission_set.this.arn
   inline_policy      = local.combined_policy
+
+  lifecycle {
+    # include_athena = true で athena_regions が空だと、生成ポリシーの
+    # aws:RequestedRegion / s3:LocationConstraint 条件が空配列になり Athena が
+    # 全リージョンで無言で拒否される。plan 時にエラーで気づけるようにする。
+    precondition {
+      condition     = !var.include_athena || length(var.athena_regions) > 0
+      error_message = "include_athena = true のときは athena_regions を空にできません（空だと Athena が全リージョンで拒否されます）。通常は concat([primary_region], document_regions) を渡してください。"
+    }
+  }
 }
 
 # 対象アカウントへの割り当て（principal_id / type は呼び出し側から指定）

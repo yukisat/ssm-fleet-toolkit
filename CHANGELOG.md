@@ -5,6 +5,30 @@ Semantic Versioning 風: MAJOR.MINOR.PATCH（破壊的変更 / 機能追加 / �
 
 ## [Unreleased]
 
+### Fixed
+
+- IAM Identity Center が primary_region と別リージョンにある環境で permission_set
+  モジュールが SSO インスタンスを取得できなかった問題を修正。`sso_region` 変数と
+  専用 provider `aws.sso` を追加し、permission_set はそのリージョンで SSO を操作する
+  （既定 `us-west-2`）。primary_region=ap-northeast-1 / Identity Center=us-west-2 の
+  環境で plan が通らなかったのを解消。
+
+### Added
+
+- Athena 権限を最小化し、専用結果バケットの作成に対応
+  - inline policy をテンプレート化（`claude-investigator-athena.json.tftpl`）し、許可リージョンを
+    `athena_regions`（= `primary_region` + `document_regions`）から自動生成（ベタ書き廃止）
+  - 結果バケットは toolkit 専用名 `ssm-fleet-athena-results-*` のみ作成・利用可能に限定
+    （`s3:CreateBucket` 等を当該プレフィックス＋許可リージョンに絞り、既存任意バケットは使わせない）
+  - コスト制御用 WorkGroup（既定 `ssm-fleet-investigator`）も同様に、専用名＋許可リージョンに
+    限定した `athena:CreateWorkGroup` で調査ロールが自前作成可能に（`athena_workgroup_name` 変数）
+  - 取得系・Glue 読み取りは `ReadOnlyAccess` に委ね、inline policy からは除外して最小化
+- SSM Document のマルチリージョン展開に対応（`document_regions` 変数）
+  - `deployments/_template` に primary_region 以外へ Document を登録する仕組みを追加
+  - opt-in リスト（例 `["us-west-2"]`）で必要なリージョンにだけ `claude-investigate-*` を登録・共有
+  - primary の `module.doc` は不変のため既存リージョンの Document には影響しない
+  - provider は Terraform の制約上リージョンごとに明示定義（us-west-2 / us-east-1 / ap-southeast-1 / ap-northeast-3 / eu-west-1 を同梱、追加は main.tf に provider + module を足す）
+
 ### Playbook hardening (AWS ベストプラクティス反映)
 
 - ページネーション規約を `playbooks/README.md` に明文化

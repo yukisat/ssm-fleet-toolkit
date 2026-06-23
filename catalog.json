@@ -731,12 +731,14 @@
           "athena:GetQueryExecution",
           "athena:GetQueryResults",
           "athena:StopQueryExecution",
+          "athena:CreateWorkGroup",
           "glue:GetTable",
           "glue:GetDatabase",
           "glue:GetPartitions",
           "s3:GetObject",
           "s3:PutObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:CreateBucket"
         ],
         "parameters": [
           {
