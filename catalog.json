@@ -731,6 +731,7 @@
           "athena:GetQueryExecution",
           "athena:GetQueryResults",
           "athena:StopQueryExecution",
+          "athena:CreateWorkGroup",
           "glue:GetTable",
           "glue:GetDatabase",
           "glue:GetPartitions",

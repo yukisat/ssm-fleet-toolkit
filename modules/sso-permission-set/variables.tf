@@ -56,6 +56,16 @@ variable "athena_results_bucket_prefix" {
   default     = "ssm-fleet-athena-results"
 }
 
+variable "athena_workgroup_name" {
+  description = <<-EOT
+    Athena 調査用 WorkGroup 名。調査ロールはこの名前の WorkGroup のみ作成できる
+    （スキャン量上限などのコスト制御設定を持つ専用 WorkGroup）。
+    primary WorkGroup は使わせない。
+  EOT
+  type        = string
+  default     = "ssm-fleet-investigator"
+}
+
 variable "include_cloudwatch" {
   description = "CloudWatch メトリクス・ログ読み取り権限を含めるか"
   type        = bool

@@ -12,6 +12,8 @@ Semantic Versioning 風: MAJOR.MINOR.PATCH（破壊的変更 / 機能追加 / �
     `athena_regions`（= `primary_region` + `document_regions`）から自動生成（ベタ書き廃止）
   - 結果バケットは toolkit 専用名 `ssm-fleet-athena-results-*` のみ作成・利用可能に限定
     （`s3:CreateBucket` 等を当該プレフィックス＋許可リージョンに絞り、既存任意バケットは使わせない）
+  - コスト制御用 WorkGroup（既定 `ssm-fleet-investigator`）も同様に、専用名＋許可リージョンに
+    限定した `athena:CreateWorkGroup` で調査ロールが自前作成可能に（`athena_workgroup_name` 変数）
   - 取得系・Glue 読み取りは `ReadOnlyAccess` に委ね、inline policy からは除外して最小化
 - SSM Document のマルチリージョン展開に対応（`document_regions` 変数）
   - `deployments/_template` に primary_region 以外へ Document を登録する仕組みを追加

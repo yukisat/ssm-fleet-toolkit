@@ -12,6 +12,7 @@ required_permissions:
   - athena:GetQueryExecution
   - athena:GetQueryResults
   - athena:StopQueryExecution
+  - athena:CreateWorkGroup  # 専用 WorkGroup が無い場合に作成（ssm-fleet-investigator に限定）
   - glue:GetTable
   - glue:GetDatabase
   - glue:GetPartitions

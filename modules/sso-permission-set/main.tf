@@ -25,6 +25,7 @@ locals {
     {
       athena_regions        = var.athena_regions
       results_bucket_prefix = var.athena_results_bucket_prefix
+      workgroup_name        = var.athena_workgroup_name
     }
   )).Statement : null
 

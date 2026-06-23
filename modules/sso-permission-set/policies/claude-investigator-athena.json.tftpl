@@ -16,6 +16,22 @@
       }
     },
     {
+      "Sid": "AthenaWorkGroupCreate",
+      "Effect": "Allow",
+      "Action": [
+        "athena:CreateWorkGroup",
+        "athena:TagResource"
+      ],
+      "Resource": [
+        "arn:aws:athena:*:*:workgroup/${workgroup_name}"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": ${jsonencode(athena_regions)}
+        }
+      }
+    },
+    {
       "Sid": "AthenaResultsBucketCreate",
       "Effect": "Allow",
       "Action": [

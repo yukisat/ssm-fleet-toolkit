@@ -95,8 +95,9 @@ QUERY_ID=$(aws athena start-query-execution \
   --profile <profile>)
 ```
 
-WorkGroup は運用者が事前に 1 回だけ作成しておく（OutputLocation は上記の専用バケットを指す）。
-※ `athena:CreateWorkGroup` は調査ロールの権限に含めていないため、WorkGroup 作成は管理権限で行う:
+WorkGroup `ssm-fleet-investigator` が無ければ作成する（OutputLocation は上記の専用バケットを指す）。
+調査ロールは専用名 `ssm-fleet-investigator`・許可リージョンに限定して `athena:CreateWorkGroup` を持つため、
+無ければ初回に自分で作成できる（既存があればそのまま使う）:
 
 ```bash
 aws athena create-work-group \
