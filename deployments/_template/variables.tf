@@ -17,8 +17,9 @@ variable "primary_region" {
 variable "sso_region" {
   description = <<-EOT
     IAM Identity Center（SSO）のホームリージョン。permission_set モジュールはこの
-    リージョンで SSO を操作する。primary_region とは別になることが多い
-    （Identity Center は組織で1リージョンにのみ存在する）。
+    リージョンで SSO を操作する。primary_region とは別（Identity Center は組織で
+    1リージョンにのみ存在する）。
+    Identity Center のホームリージョンに合わせて設定すること。
   EOT
   type        = string
   default     = "us-west-2"

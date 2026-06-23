@@ -8,6 +8,12 @@ terraform {
   }
 }
 
+# このモジュールは「渡された aws provider のリージョン」で SSO / IAM Identity Center を
+# 操作する。IAM Identity Center はホームリージョンでしか
+# 参照できないため、呼び出し側は必ず Identity Center のリージョンを向いた provider を
+# 渡すこと（deployments 側で providers = { aws = aws.sso } を指定している）。
+# primary_region 等の別リージョン provider を渡すと data.aws_ssoadmin_instances が
+# 空になり plan が失敗する。
 data "aws_ssoadmin_instances" "this" {}
 
 locals {
