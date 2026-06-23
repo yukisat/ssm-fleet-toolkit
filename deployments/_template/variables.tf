@@ -9,6 +9,16 @@ variable "primary_region" {
   default     = "ap-northeast-1"
 }
 
+variable "sso_region" {
+  description = <<-EOT
+    IAM Identity Center（SSO）のホームリージョン。permission_set モジュールはこの
+    リージョンで SSO を操作する。primary_region とは別になることが多い
+    （Identity Center は組織で1リージョンにのみ存在する）。
+  EOT
+  type        = string
+  default     = "us-west-2"
+}
+
 variable "permission_set_name" {
   description = "作成する Permission Set 名"
   type        = string

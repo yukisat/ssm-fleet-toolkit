@@ -22,6 +22,16 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+# SSO / IAM Identity Center 操作用 provider。
+# Identity Center は primary_region とは別リージョンに存在することが多いため
+# （例: us-west-2）、permission_set モジュールはこの provider で操作する。
+# sso_region に Identity Center のホームリージョンを指定すること。
+provider "aws" {
+  alias   = "sso"
+  region  = var.sso_region
+  profile = var.aws_profile
+}
+
 # ---------------------------------------------------------------------------
 # セカンダリリージョン用 provider（SSM Document を複数リージョンへ展開する場合に使う）
 #
@@ -79,6 +89,9 @@ locals {
 # SSO Permission Set（オペレータ用）
 module "permission_set" {
   source = "../../modules/sso-permission-set"
+  providers = {
+    aws = aws.sso
+  }
 
   permission_set_name = var.permission_set_name
   include_ssm         = var.enable_ssm_investigation
