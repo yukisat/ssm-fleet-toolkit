@@ -69,6 +69,16 @@ resource "aws_ssoadmin_permission_set_inline_policy" "this" {
   instance_arn       = local.instance_arn
   permission_set_arn = aws_ssoadmin_permission_set.this.arn
   inline_policy      = local.combined_policy
+
+  lifecycle {
+    # include_athena = true で athena_regions が空だと、生成ポリシーの
+    # aws:RequestedRegion / s3:LocationConstraint 条件が空配列になり Athena が
+    # 全リージョンで無言で拒否される。plan 時にエラーで気づけるようにする。
+    precondition {
+      condition     = !var.include_athena || length(var.athena_regions) > 0
+      error_message = "include_athena = true のときは athena_regions を空にできません（空だと Athena が全リージョンで拒否されます）。通常は concat([primary_region], document_regions) を渡してください。"
+    }
+  }
 }
 
 # 対象アカウントへの割り当て（principal_id / type は呼び出し側から指定）

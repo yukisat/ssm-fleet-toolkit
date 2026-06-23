@@ -27,6 +27,9 @@ variable "document_regions" {
 
     指定できるのは main.tf に provider が定義済みのリージョンのみ。
     新しいリージョンを足す場合は main.tf に provider と module ブロックを追加すること。
+
+    注意: リストからリージョンを外して apply すると、そのリージョンの
+    claude-investigate-* Document はすべて削除（destroy）される。
   EOT
   type        = list(string)
   default     = []

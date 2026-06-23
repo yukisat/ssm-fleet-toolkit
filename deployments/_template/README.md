@@ -57,6 +57,8 @@ document_regions = ["us-west-2"]
 - 同梱済みリージョン: us-west-2 / us-east-1 / ap-southeast-1 / ap-northeast-3 / eu-west-1。
   これ以外を使う場合は Terraform の制約上、main.tf に provider と module ブロックを追加し、
   variables.tf の validation 許可リストにも足すこと（main.tf 冒頭のコメント参照）。
+- **注意**: 一度展開したリージョンを `document_regions` から外して apply すると、そのリージョンの
+  `claude-investigate-*` Document はすべて削除（destroy）される。減らす変更時は plan で確認すること。
 
 ## 既存環境との共存
 
