@@ -8,7 +8,9 @@
         "athena:StartQueryExecution",
         "athena:StopQueryExecution"
       ],
-      "Resource": "*",
+      "Resource": [
+        "arn:aws:athena:*:*:workgroup/${workgroup_name}"
+      ],
       "Condition": {
         "StringEquals": {
           "aws:RequestedRegion": ${jsonencode(athena_regions)}
@@ -35,24 +37,24 @@
       "Sid": "AthenaResultsBucketCreate",
       "Effect": "Allow",
       "Action": [
-        "s3:CreateBucket",
-        "s3:PutBucketPublicAccessBlock",
-        "s3:PutEncryptionConfiguration",
-        "s3:PutBucketTagging"
+        "s3:CreateBucket"
       ],
       "Resource": [
         "arn:aws:s3:::${results_bucket_prefix}-*"
       ],
       "Condition": {
         "StringEquals": {
-          "aws:RequestedRegion": ${jsonencode(athena_regions)}
+          "s3:LocationConstraint": ${jsonencode(athena_regions)}
         }
       }
     },
     {
-      "Sid": "AthenaResultsBucketUse",
+      "Sid": "AthenaResultsBucketManage",
       "Effect": "Allow",
       "Action": [
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutEncryptionConfiguration",
+        "s3:PutBucketTagging",
         "s3:PutObject",
         "s3:AbortMultipartUpload",
         "s3:GetObject",
@@ -62,7 +64,12 @@
       "Resource": [
         "arn:aws:s3:::${results_bucket_prefix}-*",
         "arn:aws:s3:::${results_bucket_prefix}-*/*"
-      ]
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": ${jsonencode(athena_regions)}
+        }
+      }
     }
   ]
 }

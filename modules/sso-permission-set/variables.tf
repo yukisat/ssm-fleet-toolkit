@@ -40,6 +40,10 @@ variable "athena_regions" {
     Athena 実行も結果バケット作成もできない。
     通常は呼び出し側で concat([primary_region], document_regions) を渡す。
     include_athena = true のとき、空にしないこと（空だと全リージョンで拒否になる）。
+
+    注意: 結果バケット作成（s3:CreateBucket）の制限には s3:LocationConstraint を使うため、
+    us-east-1 は LocationConstraint が空になり一致しない。us-east-1 で結果バケットを作る運用が
+    必要な場合はバケットを事前作成するか、ポリシーに Null 条件を追加すること。
   EOT
   type        = list(string)
   default     = []

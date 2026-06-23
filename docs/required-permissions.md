@@ -102,10 +102,10 @@ CloudFront ログ解析、CloudWatch メトリクス取得等。利用者の判�
 
 | Sid | アクション | リソース | 条件 |
 |---|---|---|---|
-| AthenaQueryExecution | athena:StartQueryExecution, StopQueryExecution | `*` | `aws:RequestedRegion` ∈ athena_regions |
+| AthenaQueryExecution | athena:StartQueryExecution, StopQueryExecution | `workgroup/<workgroup_name>` | `aws:RequestedRegion` ∈ athena_regions |
 | AthenaWorkGroupCreate | athena:CreateWorkGroup, TagResource | `workgroup/<workgroup_name>` | `aws:RequestedRegion` ∈ athena_regions |
-| AthenaResultsBucketCreate | s3:CreateBucket, PutBucketPublicAccessBlock, PutEncryptionConfiguration, PutBucketTagging | `<prefix>-*` | `aws:RequestedRegion` ∈ athena_regions |
-| AthenaResultsBucketUse | s3:PutObject, AbortMultipartUpload, GetObject, ListBucket, GetBucketLocation | `<prefix>-*` | — |
+| AthenaResultsBucketCreate | s3:CreateBucket | `<prefix>-*` | `s3:LocationConstraint` ∈ athena_regions |
+| AthenaResultsBucketManage | s3:PutBucketPublicAccessBlock, PutEncryptionConfiguration, PutBucketTagging, PutObject, AbortMultipartUpload, GetObject, ListBucket, GetBucketLocation | `<prefix>-*` | `aws:RequestedRegion` ∈ athena_regions |
 
 設計のポイント:
 
@@ -113,10 +113,13 @@ CloudFront ログ解析、CloudWatch メトリクス取得等。利用者の判�
   Athena 実行・WorkGroup 作成・結果バケット作成のいずれもできない。
 - **専用バケットのみ**: 結果バケットは toolkit 専用名 `<prefix>-*`（既定 prefix = `ssm-fleet-athena-results`）
   のみ作成・利用可能。お客様環境の既存バケットは使わせない。
-- **専用 WorkGroup のみ**: コスト制御（スキャン量上限）付き WorkGroup `<workgroup_name>`
-  （既定 `ssm-fleet-investigator`）のみ作成可能。無い場合は調査ロール自身が作成できる。
+- **専用 WorkGroup のみ**: クエリ実行（StartQueryExecution）も WorkGroup 作成もコスト制御付き
+  WorkGroup `<workgroup_name>`（既定 `ssm-fleet-investigator`）に Resource 限定。primary 等の他 WorkGroup では実行不可。
 - **作成も許可**: 結果バケット・WorkGroup が無い場合は調査ロール自身が当該リージョンに作成できる
   （いずれも専用名＋許可リージョンに限定）。
+- **CreateBucket のリージョン条件は s3:LocationConstraint**: S3 CreateBucket はグローバルエンドポイント
+  経由で `aws:RequestedRegion` が常に us-east-1 になるため、作成リージョン限定には `s3:LocationConstraint`
+  を使う。us-east-1 は LocationConstraint が空で一致しない点に注意（modules/sso-permission-set/variables.tf の athena_regions 参照）。
 - **取得系・Glue は ReadOnlyAccess 側**: athena:Get*/List*、glue:Get*、結果以外の s3:Get*/List* は
   `attach_aws_readonly = true` の ReadOnlyAccess でカバーするため inline policy には含めない（最小化）。
 
