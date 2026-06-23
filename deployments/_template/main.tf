@@ -19,7 +19,7 @@ terraform {
 
 provider "aws" {
   region  = var.primary_region
-  profile = var.aws_profile
+  profile = var.aws_profile != "" ? var.aws_profile : null
 }
 
 # SSO / IAM Identity Center 操作用 provider。
@@ -29,7 +29,7 @@ provider "aws" {
 provider "aws" {
   alias   = "sso"
   region  = var.sso_region
-  profile = var.aws_profile
+  profile = var.aws_profile != "" ? var.aws_profile : null
 }
 
 # ---------------------------------------------------------------------------
@@ -49,31 +49,31 @@ provider "aws" {
 provider "aws" {
   alias   = "us_west_2"
   region  = "us-west-2"
-  profile = var.aws_profile
+  profile = var.aws_profile != "" ? var.aws_profile : null
 }
 
 provider "aws" {
   alias   = "us_east_1"
   region  = "us-east-1"
-  profile = var.aws_profile
+  profile = var.aws_profile != "" ? var.aws_profile : null
 }
 
 provider "aws" {
   alias   = "ap_southeast_1"
   region  = "ap-southeast-1"
-  profile = var.aws_profile
+  profile = var.aws_profile != "" ? var.aws_profile : null
 }
 
 provider "aws" {
   alias   = "ap_northeast_3"
   region  = "ap-northeast-3"
-  profile = var.aws_profile
+  profile = var.aws_profile != "" ? var.aws_profile : null
 }
 
 provider "aws" {
   alias   = "eu_west_1"
   region  = "eu-west-1"
-  profile = var.aws_profile
+  profile = var.aws_profile != "" ? var.aws_profile : null
 }
 
 # Organizations の全アカウントを取得

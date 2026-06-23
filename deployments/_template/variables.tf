@@ -1,6 +1,11 @@
 variable "aws_profile" {
-  description = "委任管理アカウントの AWS CLI profile"
+  description = <<-EOT
+    委任管理アカウントの AWS CLI profile 名。
+    空文字 "" にすると profile を指定せず、環境変数（AWS_ACCESS_KEY_ID 等の
+    SSO 一時キー）など標準のクレデンシャルチェーンを使う。
+  EOT
   type        = string
+  default     = ""
 }
 
 variable "primary_region" {
