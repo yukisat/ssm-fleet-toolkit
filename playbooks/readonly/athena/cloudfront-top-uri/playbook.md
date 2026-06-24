@@ -143,7 +143,7 @@ aws athena create-work-group \
 
 主要な制御:
 
-- `BytesScannedCutoffPerQuery: 10 GiB` — 上限超過時はクエリ強制中断。WHERE 句を外したり partition 指定漏れで暴走しても保険になる
+- `BytesScannedCutoffPerQuery: 10 GiB` — 上限超過時はクエリ強制中断。ただし **CloudFront 標準ログはパーティションがない**ため WHERE 句で期間を絞っても全データをスキャンする。データ量が多い環境では 10 GiB を超えることがある。その場合は WorkGroup 作成前に上限値を引き上げること（`docs/known-gotchas.md` 20 番参照）
 - `EnforceWorkGroupConfiguration: true` — クライアントが OutputLocation・暗号化設定を上書き不可
 - `EncryptionConfiguration: SSE_S3` — 結果バケット暗号化
 - `PublishCloudWatchMetricsEnabled: true` — `AWS/Athena` Namespace でスキャン量・実行時間を可視化（コスト監視・アラート用）

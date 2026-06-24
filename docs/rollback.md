@@ -62,8 +62,9 @@ terraform destroy -target=module.permission_set
 ロールバック後、以下のコマンドで残存リソースを確認:
 
 ```bash
-# SSM Document
-aws ssm list-documents --filters Key=Name,Values=claude-investigate
+# SSM Document（委任管理アカウントから共有されているため Owner=Shared が必要）
+aws ssm list-documents \
+  --filters "Key=Owner,Values=Shared" "Key=Name,Values=claude-investigate"
 
 # IAM Role
 aws iam list-roles --query 'Roles[?starts_with(RoleName, `ssm-fleet-`)].RoleName'

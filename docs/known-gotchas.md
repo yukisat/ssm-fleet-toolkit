@@ -155,3 +155,52 @@ aws ec2 describe-instances --filters "Name=tag:aws:autoscaling:groupName,Values=
 **現象**: state が他プロジェクトと衝突する。
 
 **対策**: `<account-id>-ssm-fleet-tf-state` 命名のバケットを必ず使う（`bootstrap/02-create-tf-backend.sh` が作成）。
+
+## SSM Document 系
+
+### 19. `list-documents` で `claude-investigate-*` が見つからない
+
+**現象**: 子アカウント内で `aws ssm list-documents --filters Key=Name,Values=claude-investigate` を実行しても 0 件。
+
+**原因**: `list-documents` のデフォルトは自アカウント所有（Self）の Document のみ返す。委任管理アカウントから共有された Document は `Owner=Shared` に分類されるため、Self フィルターでは見えない。
+
+**対策**: `--filters` に `Key=Owner,Values=Shared` を追加する。
+
+```bash
+aws ssm list-documents \
+  --filters "Key=Owner,Values=Shared" "Key=Name,Values=claude-investigate" \
+  --profile <profile>
+```
+
+Document を直接実行（SendCommand）するときも、名前参照ではなく ARN で指定すると確実:
+
+```bash
+# ARN = arn:aws:ssm:<region>:<delegated-admin-account-id>:document/claude-investigate-<name>
+aws ssm send-command \
+  --document-name "arn:aws:ssm:ap-northeast-1:<delegated-admin-account-id>:document/claude-investigate-os-disk-usage" \
+  --instance-ids <instance-id> \
+  --profile <profile>
+```
+
+### 20. CloudFront ログにパーティションがないと Athena WorkGroup の 10 GiB 上限に引っかかる
+
+**現象**: CloudFront ログを Athena で絞り込んでも `Bytes scanned limit was exceeded` でクエリが失敗する。
+
+**原因**: CloudFront の標準ログは S3 パスにパーティション構造（`year=/month=/day=` 等）がないため、WHERE 句で期間を絞っても Athena は全データをスキャンする。データ量が多いサイトでは 10 GiB を超えやすい。
+
+**対策**: WorkGroup を作成（または更新）するときにスキャン上限を実際のデータ量に合わせて引き上げる。目安は「1 日あたりのログサイズ × 調査対象期間 × 2（余裕）」。
+
+```bash
+# 現在の上限確認
+aws athena get-work-group --work-group ssm-fleet-investigator \
+  --query 'WorkGroup.Configuration.BytesScannedCutoffPerQuery' --output text \
+  --region "$REGION" --profile <profile>
+
+# 上限を引き上げて更新（例: 100 GiB = 107374182400）
+aws athena update-work-group \
+  --work-group ssm-fleet-investigator \
+  --configuration-updates "BytesScannedCutoffPerQuery=107374182400" \
+  --region "$REGION" --profile <profile>
+```
+
+抜本的な解決策は Glue Crawler でパーティションを作成すること（`known-gotchas.md` 13 番参照）。
