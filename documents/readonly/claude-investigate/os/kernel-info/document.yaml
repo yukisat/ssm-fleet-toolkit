@@ -1,0 +1,59 @@
+schemaVersion: "2.2"
+description: |
+  実行中カーネルのバージョン・インストール済みカーネルパッケージ・MPTCP 有効状態・
+  利用可能なカーネルアップデートを JSON で取得する readonly 調査 Document。
+  CVE 影響調査（カーネル系脆弱性）で使用する。
+parameters: {}
+mainSteps:
+  - action: aws:runShellScript
+    name: collectKernelInfo
+    inputs:
+      timeoutSeconds: "30"
+      runCommand:
+        - |
+          set -eu
+
+          # 実行中カーネル
+          running=$(uname -r)
+
+          # インストール済みカーネルパッケージ（複数系統対応）
+          installed=$(rpm -qa --qf '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' \
+            | grep -E '^kernel(-6\.[0-9]+)?' | sort || echo "")
+
+          # MPTCP 有効/無効（kernel 5.6+ / AL2023 で存在する可能性あり）
+          mptcp=$(sysctl -n net.mptcp.enabled 2>/dev/null || echo "0")
+
+          # 利用可能なカーネルアップデート（AL2023: dnf / AL2: yum）
+          if command -v dnf &>/dev/null; then
+            pkg_mgr="dnf"
+            available=$(dnf check-update kernel kernel6.12 kernel6.18 2>/dev/null \
+              | grep -E '^kernel' | awk '{print $1" "$2}' || echo "")
+          else
+            pkg_mgr="yum"
+            available=$(yum check-update kernel 2>/dev/null \
+              | grep -E '^kernel' | awk '{print $1" "$2}' || echo "")
+          fi
+
+          # JSON 組み立て
+          installed_json=$(echo "$installed" | python3 -c "
+          import sys, json
+          lines = [l.strip() for l in sys.stdin if l.strip()]
+          print(json.dumps(lines))
+          ")
+
+          available_json=$(echo "$available" | python3 -c "
+          import sys, json
+          lines = [l.strip() for l in sys.stdin if l.strip()]
+          print(json.dumps(lines))
+          ")
+
+          python3 -c "
+          import json
+          print(json.dumps({
+            'running_kernel': '$running',
+            'installed_packages': $installed_json,
+            'mptcp_enabled': int('$mptcp'),
+            'available_updates': $available_json,
+            'package_manager': '$pkg_mgr'
+          }, ensure_ascii=False))
+          "

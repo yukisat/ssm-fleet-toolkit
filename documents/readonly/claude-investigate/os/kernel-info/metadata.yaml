@@ -1,0 +1,59 @@
+name: claude-investigate-os-kernel-info
+category: os
+subcategory: linux-common
+safety: readonly
+description: |
+  実行中カーネルのバージョン・インストール済みカーネルパッケージ・MPTCP 有効状態・
+  利用可能なカーネルアップデートを JSON で取得する。
+  CVE 影響調査（カーネル系脆弱性）で使用する。
+
+supported_os:
+  - amazon-linux-2
+  - amazon-linux-2023
+  - ubuntu-22.04
+  - rhel-9
+
+required_packages: []
+required_commands:
+  - uname
+  - rpm
+  - sysctl
+  - python3
+
+parameters: []
+
+output_schema:
+  type: object
+  properties:
+    running_kernel:
+      type: string
+      description: "uname -r の出力（現在実行中のカーネル）"
+    installed_packages:
+      type: array
+      items: { type: string }
+      description: "インストール済みカーネルパッケージ一覧"
+    mptcp_enabled:
+      type: integer
+      description: "net.mptcp.enabled の値（0=無効, 1=有効）。カーネルが対応していない場合は 0"
+    available_updates:
+      type: array
+      items: { type: string }
+      description: "dnf/yum で入手可能なカーネルアップデート一覧（空なら最新）"
+    package_manager:
+      type: string
+      description: "使用したパッケージマネージャ（dnf / yum）"
+
+estimated_runtime_seconds: 10
+
+claude_hints: |
+  - running_kernel が修正済みバージョン未満なら脆弱
+  - CVE-2026-98432 の場合: AL2023 kernel6.18 >= 6.18.56-125.164 / kernel6.12 >= 6.12.113-138.209 が修正済み
+  - mptcp_enabled=1 かつ未修正カーネルなら緊急対応が必要
+  - mptcp_enabled=0（デフォルト）なら MPTCP リスナ経由の攻撃は困難で優先度を下げて良い
+  - available_updates が空なら現時点で入手可能なパッチが存在しない
+
+example_invocation: |
+  aws ssm send-command \
+    --document-name claude-investigate-os-kernel-info \
+    --instance-ids i-xxxxxxxxxxxx \
+    --profile amimoto-claude-investigator

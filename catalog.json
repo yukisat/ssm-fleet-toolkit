@@ -350,6 +350,22 @@
         "estimated_runtime_seconds": 3
       },
       {
+        "name": "claude-investigate-os-kernel-info",
+        "path": "documents/readonly/claude-investigate/os/kernel-info",
+        "category": "os",
+        "subcategory": "linux-common",
+        "safety": "readonly",
+        "description": "実行中カーネルのバージョン・インストール済みカーネルパッケージ・MPTCP 有効状態・\n利用可能なカーネルアップデートを JSON で取得する。\nCVE 影響調査（カーネル系脆弱性）で使用する。",
+        "supported_os": [
+          "amazon-linux-2",
+          "amazon-linux-2023",
+          "ubuntu-22.04",
+          "rhel-9"
+        ],
+        "parameters": [],
+        "estimated_runtime_seconds": 10
+      },
+      {
         "name": "claude-investigate-os-listening-ports",
         "path": "documents/readonly/claude-investigate/os/listening-ports",
         "category": "os",
